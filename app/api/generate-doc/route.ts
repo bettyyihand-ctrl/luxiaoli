@@ -38,19 +38,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Template not found" }, { status: 500 });
   }
 
-  const zip = new PizZip(templateContent);
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-    nullGetter() {
-      return "___";
-    },
-  });
-
-  const fields = extractDocFields(rawText, validDocType);
-  doc.render(fields);
-
-  const outputBuffer: Buffer = doc.getZip().generate({ type: "nodebuffer" });
+  let outputBuffer: Buffer;
+  try {
+    const zip = new PizZip(templateContent);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      nullGetter() {
+        return "___";
+      },
+    });
+    const fields = extractDocFields(rawText, validDocType);
+    doc.render(fields);
+    outputBuffer = doc.getZip().generate({ type: "nodebuffer" }) as Buffer;
+  } catch (err) {
+    console.error("[generate-doc] docxtemplater error:", err);
+    return NextResponse.json({ error: "Document generation failed" }, { status: 500 });
+  }
 
   const fileName = `${validDocType}.docx`;
   return new NextResponse(new Uint8Array(outputBuffer), {

@@ -234,20 +234,36 @@ export default function Home() {
     }
   };
 
-  const handleDownloadDoc = async (rawText: string, docType: string) => {
-    const res = await fetch("/api/generate-doc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rawText, docType }),
-    });
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${docType}.docx`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadDoc = async (rawText: string, docType: string, msgId: string) => {
+    setDownloadingId(msgId);
+    try {
+      const res = await fetch("/api/generate-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText, docType }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "未知错误" })) as { error?: string };
+        alert(`文档生成失败：${err.error ?? res.statusText}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${docType}.docx`;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert(`下载失败，请重试。${err instanceof Error ? err.message : ""}`);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const TopBar = () => (
@@ -425,11 +441,12 @@ export default function Home() {
                      {msg.role === 'assistant' && msg.docType && msg.rawText && (
                        <button
                          type="button"
-                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!)}
-                         className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-[rgba(17,17,17,0.16)] bg-white text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[#FDE047] hover:border-[#FACC15] transition-colors shadow-[4px_4px_0_rgba(17,17,17,0.06)]"
+                         disabled={downloadingId === msg.id}
+                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id)}
+                         className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-[rgba(17,17,17,0.16)] bg-white text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[#FDE047] hover:border-[#FACC15] transition-colors shadow-[4px_4px_0_rgba(17,17,17,0.06)] disabled:opacity-50 disabled:cursor-not-allowed"
                        >
-                         <span>⬇</span>
-                         <span>下载{msg.docType} Word 文档</span>
+                         <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>
+                         <span>{downloadingId === msg.id ? "生成中…" : `下载${msg.docType} Word 文档`}</span>
                        </button>
                      )}
                    </div>
