@@ -27,7 +27,6 @@ export default function Home() {
   const [isSending, setIsSending] = useState(false);
   const [userContext, setUserContext] = useState<Record<string, unknown>>({});
   const [inputText, setInputText] = useState("");
-  const [freeConsultationMode, setFreeConsultationMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortControllerRef = useRef<AbortController | null>(null);
@@ -102,11 +101,8 @@ export default function Home() {
       })),
       custom_variables: {
         actionType: selectedMode,
-        ...(selectedMode === '咨询' ? { consultationMode: freeConsultationMode ? "free" : "guided" } : {}),
         ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
-        ...((selectedMode !== '咨询' || !freeConsultationMode) && Object.keys(userContext).length > 0
-          ? { userContext: JSON.stringify(userContext) }
-          : {})
+        ...(Object.keys(userContext).length > 0 ? { userContext: JSON.stringify(userContext) } : {})
       }
     };
 
@@ -309,7 +305,7 @@ export default function Home() {
               </p>
               {selectedMode === '咨询' && (
                 <p className="max-w-[560px] m-0 text-[12px] leading-[1.6] text-[var(--color-text-secondary)]">
-                  可选补充信息：事故时间地点、责任划分、伤情与治疗情况、已发生费用、对方/保险沟通进展。
+                  建议补充信息：事故时间地点、责任划分、伤情与治疗情况、已发生费用、对方/保险沟通进展。
                 </p>
               )}
             </div>
@@ -412,17 +408,6 @@ export default function Home() {
         {/* Composer */}
         {selectedMode === '咨询' && (
           <section className="flex flex-wrap items-center gap-2 -mt-2">
-            <button
-              type="button"
-              onClick={() => setFreeConsultationMode(prev => !prev)}
-              className={`min-h-[30px] px-2.5 rounded-sm border text-[12px] transition-colors ${
-                freeConsultationMode
-                  ? "border-[var(--color-primary)] text-[#111] bg-[#FEF9C3]"
-                  : "border-[rgba(17,17,17,0.12)] text-[var(--color-text-secondary)] bg-white"
-              }`}
-            >
-              {freeConsultationMode ? "自由问答：开启" : "自由问答：关闭"}
-            </button>
             <span className="text-[12px] text-[var(--color-text-secondary)]">咨询示例</span>
             {CONSULTATION_PROMPTS.map(prompt => (
               <button
@@ -472,9 +457,7 @@ export default function Home() {
                  handleSend();
                }
              }}
-             placeholder={selectedMode === '咨询' && freeConsultationMode
-               ? "直接输入任何法律问题，都可以获得回复..."
-               : "描述事故经过、伤情、费用或想咨询的问题..."}
+             placeholder="描述事故经过、伤情、费用或想咨询的问题..."
              className="w-full min-h-[42px] max-h-[148px] resize-none border border-transparent rounded-sm p-[9px_10px] text-[var(--color-text-primary)] bg-[#F5F7FA] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
            />
            <button type="submit" disabled={isSending} className="min-h-[42px] border-0 rounded-sm text-white bg-[#111] font-semibold hover:bg-[var(--color-accent)] disabled:opacity-56 disabled:cursor-not-allowed transition-colors">发送</button>
