@@ -468,45 +468,54 @@ export default function Home() {
           )}
         </section>
 
-        {/* Chat Panel */}
-        <section className="min-h-[260px] md:min-h-[360px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-panel)] overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[rgba(17,17,17,0.08)] bg-[rgba(248,250,252,0.9)] shrink-0">
-            <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">对话</span>
-            <span className="text-[12px] text-[var(--color-text-secondary)] flex items-center gap-1">
-              <span>{ICONS[selectedMode]}</span>
-              <span>{selectedMode === '霍格沃茨' ? '调试' : selectedMode}模式</span>
-            </span>
+        {/* Chat Panel / Initial Hero */}
+        {messages.some(m => m.id !== "welcome") ? (
+          <section className="min-h-[260px] md:min-h-[360px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-panel)] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[rgba(17,17,17,0.08)] bg-[rgba(248,250,252,0.9)] shrink-0">
+              <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">对话</span>
+              <span className="text-[12px] text-[var(--color-text-secondary)] flex items-center gap-1">
+                <span>{ICONS[selectedMode]}</span>
+                <span>{selectedMode === '霍格沃茨' ? '调试' : selectedMode}模式</span>
+              </span>
+            </div>
+            <div className="flex-1 max-h-[calc(100vh-300px)] md:max-h-[calc(100vh-262px)] overflow-y-auto p-3.5 md:p-6 scroll-smooth">
+              {messages.map((msg, i) => (
+                <article key={msg.id || i} className={`flex items-start gap-2.5 md:mb-[18px] mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                   <div className={`w-8 h-8 shrink-0 grid place-items-center rounded-sm text-[15px] ${msg.role === 'user' ? 'order-2 text-white bg-[var(--color-accent)]' : 'text-[#111] bg-[#FDE047]'}`}>
+                     {msg.role === 'user' ? '你' : '理'}
+                   </div>
+                   <div className={`max-w-[86%] md:max-w-[min(720px,78%)] border rounded-sm md:p-[13px_15px] p-[10px_12px] leading-[1.72] break-words ${
+                     msg.role === 'user'
+                       ? 'text-white border-[var(--color-accent)] bg-[var(--color-accent)] shadow-[8px_8px_0_rgba(232,74,95,0.14)]'
+                       : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
+                   }`}>
+                     {msg.role === 'user' ? (
+                       <span className="whitespace-pre-wrap">
+                         {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
+                       </span>
+                     ) : (
+                       msg.rawText === ""
+                          ? <span className="inline-flex gap-1 items-center">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
+                            </span>
+                          : <MarkdownMessage rawText={msg.rawText || ""} />
+                     )}
+                   </div>
+                </article>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </section>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3 py-8 select-none">
+            <span className="text-[48px] leading-none">🚗</span>
+            <p className="m-0 font-serif text-[18px] text-[var(--color-text-primary)]">路小理</p>
+            <p className="m-0 text-[13px] text-[var(--color-text-secondary)]">你的交通纠纷法律助手</p>
+            <p className="m-0 text-[12px] text-[var(--color-text-secondary)] mt-1">开始描述你的情况</p>
           </div>
-          <div className="flex-1 max-h-[calc(100vh-300px)] md:max-h-[calc(100vh-262px)] overflow-y-auto p-3.5 md:p-6 scroll-smooth">
-            {messages.map((msg, i) => (
-              <article key={msg.id || i} className={`flex items-start gap-2.5 md:mb-[18px] mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                 <div className={`w-8 h-8 shrink-0 grid place-items-center rounded-sm text-[15px] ${msg.role === 'user' ? 'order-2 text-white bg-[var(--color-accent)]' : 'text-[#111] bg-[#FDE047]'}`}>
-                   {msg.role === 'user' ? '你' : '理'}
-                 </div>
-                 <div className={`max-w-[86%] md:max-w-[min(720px,78%)] border rounded-sm md:p-[13px_15px] p-[10px_12px] leading-[1.72] break-words ${
-                   msg.role === 'user' 
-                     ? 'text-white border-[var(--color-accent)] bg-[var(--color-accent)] shadow-[8px_8px_0_rgba(232,74,95,0.14)]' 
-                     : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
-                 }`}>
-                   {msg.role === 'user' ? (
-                     <span className="whitespace-pre-wrap">
-                       {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
-                     </span>
-                   ) : (
-                     msg.rawText === ""
-                        ? <span className="inline-flex gap-1 items-center">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
-                          </span>
-                        : <MarkdownMessage rawText={msg.rawText || ""} />
-                   )}
-                 </div>
-              </article>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </section>
+        )}
 
         {/* Composer */}
         {selectedMode === '咨询' && (
