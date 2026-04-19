@@ -446,8 +446,17 @@ export default function Home() {
               📎 票据与责任认定书图片识别功能即将上线，当前版本请在对话框中直接描述关键信息（如责任比例、伤残等级等）
             </div>
           )}
-          <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
-           <button type="button" aria-label="附件功能" onClick={handleAttachClick} className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
+          <form
+            onSubmit={e => { e.preventDefault(); handleSend(); }}
+            className={`grid items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0 ${
+              selectedMode === '文书'
+                ? "grid-cols-[minmax(0,1fr)_64px] md:grid-cols-[minmax(0,1fr)_72px]"
+                : "grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px]"
+            }`}
+          >
+           {selectedMode !== '文书' && (
+             <button type="button" aria-label="附件功能" onClick={handleAttachClick} className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
+           )}
            <textarea 
              ref={textareaRef}
              rows={1}
