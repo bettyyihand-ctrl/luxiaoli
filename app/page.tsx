@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { ActionMode, Message } from "@/lib/types";
 import { renderMarkdown, parseUserContext } from "@/lib/markdown";
 
-const MODES: ActionMode[] = ["计算", "咨询", "文书", "霍格沃茨"];
+const MODES: ActionMode[] = process.env.NODE_ENV === 'development'
+  ? ["计算", "咨询", "文书", "霍格沃茨"]
+  : ["计算", "咨询", "文书"];
 const ICONS: Record<ActionMode, string> = {
   "计算": "🧮",
   "咨询": "💬",
@@ -246,19 +248,21 @@ export default function Home() {
             {selectedMode === '霍格沃茨' && "调试模式：可在此暴露系统内部 API 与 Context 状态。"}
           </p>
 
-          <details className="border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] mt-2">
-            <summary className="min-h-[38px] flex items-center px-3 text-[var(--color-accent)] text-[13px] font-semibold select-none cursor-pointer">API 调试：查看本次请求和返回</summary>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
-              <article className="min-w-0">
-                <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">请求 payload</h3>
-                <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiRequestLog}</pre>
-              </article>
-              <article className="min-w-0">
-                <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">返回内容</h3>
-                <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiResponseLog}</pre>
-              </article>
-            </div>
-          </details>
+          {process.env.NODE_ENV === 'development' && (
+            <details className="border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] mt-2">
+              <summary className="min-h-[38px] flex items-center px-3 text-[var(--color-accent)] text-[13px] font-semibold select-none cursor-pointer">API 调试：查看本次请求和返回</summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
+                <article className="min-w-0">
+                  <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">请求 payload</h3>
+                  <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiRequestLog}</pre>
+                </article>
+                <article className="min-w-0">
+                  <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">返回内容</h3>
+                  <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiResponseLog}</pre>
+                </article>
+              </div>
+            </details>
+          )}
         </section>
 
         {/* Chat Panel */}
