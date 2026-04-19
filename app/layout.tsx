@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
-import { Noto_Sans_SC, Noto_Serif_SC } from "next/font/google";
+import { Inter, Poppins, Noto_Sans_SC } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
 
 const notoSans = Noto_Sans_SC({
   variable: "--font-noto-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-});
-
-const notoSerif = Noto_Serif_SC({
-  variable: "--font-noto-serif",
-  subsets: ["latin"],
-  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${notoSans.variable} ${notoSerif.variable} h-full antialiased`}
+      className={`${inter.variable} ${poppins.variable} ${notoSans.variable} h-full antialiased`}
     >
       <body className="h-full m-0 text-[var(--color-text-primary)]">
         {children}
