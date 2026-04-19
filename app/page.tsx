@@ -8,6 +8,12 @@ import MarkdownMessage from "@/components/MarkdownMessage";
 const MODES: ActionMode[] = process.env.NODE_ENV === 'development'
   ? ["计算", "咨询", "文书", "霍格沃茨"]
   : ["计算", "咨询", "文书"];
+const PLACEHOLDER_BY_MODE: Record<ActionMode, string> = {
+  "计算": "告诉我：事故发生地、责任比例、年龄、医疗费、住院/误工天数、月收入、有无伤残",
+  "咨询": "描述事故情况和你想了解的法律问题",
+  "文书": "请先在上方选择文书类型，再补充关键事实（当事人、事故时间地点、诉求金额等）。",
+  "霍格沃茨": "描述事故经过、伤情、费用或想咨询的问题...",
+};
 const ICONS: Record<ActionMode, string> = {
   "计算": "🧮",
   "咨询": "💬",
@@ -448,7 +454,7 @@ export default function Home() {
                  handleSend();
                }
              }}
-             placeholder="描述事故经过、伤情、费用或想咨询的问题..."
+             placeholder={PLACEHOLDER_BY_MODE[selectedMode]}
              className="w-full min-h-[42px] max-h-[148px] resize-none border border-transparent rounded-sm p-[9px_10px] text-[var(--color-text-primary)] bg-[#F5F7FA] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
            />
            <button type="submit" disabled={isSending} className="min-h-[42px] border-0 rounded-sm text-white bg-[#111] font-semibold hover:bg-[var(--color-accent)] disabled:opacity-56 disabled:cursor-not-allowed transition-colors">发送</button>
