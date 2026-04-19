@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ActionMode, Message } from "@/lib/types";
-import { renderMarkdown, parseUserContext } from "@/lib/markdown";
+import { parseUserContext } from "@/lib/markdown";
+import MarkdownMessage from "@/components/MarkdownMessage";
 
 const MODES: ActionMode[] = process.env.NODE_ENV === 'development'
   ? ["计算", "咨询", "文书", "霍格沃茨"]
@@ -374,15 +375,17 @@ export default function Home() {
                      : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
                  }`}>
                    {msg.role === 'user' ? (
-                     msg.content.find(c => c.type === 'text')?.text || '已发送内容'
+                     <span className="whitespace-pre-wrap">
+                       {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
+                     </span>
                    ) : (
-                     msg.rawText === "" 
+                     msg.rawText === ""
                         ? <span className="inline-flex gap-1 items-center">
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
                           </span>
-                        : <div dangerouslySetInnerHTML={renderMarkdown(msg.rawText || "")} />
+                        : <MarkdownMessage rawText={msg.rawText || ""} />
                    )}
                  </div>
               </article>
