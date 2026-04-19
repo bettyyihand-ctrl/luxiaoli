@@ -118,7 +118,8 @@ export default function Home() {
     setApiResponseLog("正在等待 API 返回...");
 
     const aiMessageId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "" }]);
+    const pendingDocType = selectedMode === "文书" ? selectedDocType : undefined;
+    setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "", docType: pendingDocType }]);
 
     try {
       const controller = new AbortController();
@@ -231,6 +232,22 @@ export default function Home() {
       streamAbortControllerRef.current = null;
       setIsSending(false);
     }
+  };
+
+  const handleDownloadDoc = async (rawText: string, docType: string) => {
+    const res = await fetch("/api/generate-doc", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rawText, docType }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${docType}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const TopBar = () => (
@@ -385,23 +402,35 @@ export default function Home() {
                    <div className={`w-8 h-8 shrink-0 grid place-items-center rounded-sm text-[15px] ${msg.role === 'user' ? 'order-2 text-white bg-[var(--color-accent)]' : 'text-[#111] bg-[#FDE047]'}`}>
                      {msg.role === 'user' ? '你' : '理'}
                    </div>
-                   <div className={`max-w-[86%] md:max-w-[min(720px,78%)] border rounded-sm md:p-[13px_15px] p-[10px_12px] leading-[1.72] break-words ${
-                     msg.role === 'user'
-                       ? 'text-white border-[var(--color-accent)] bg-[var(--color-accent)] shadow-[8px_8px_0_rgba(232,74,95,0.14)]'
-                       : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
-                   }`}>
-                     {msg.role === 'user' ? (
-                       <span className="whitespace-pre-wrap">
-                         {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
-                       </span>
-                     ) : (
-                       msg.rawText === ""
-                          ? <span className="inline-flex gap-1 items-center">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
-                            </span>
-                          : <MarkdownMessage rawText={msg.rawText || ""} />
+                   <div className="flex flex-col gap-2 max-w-[86%] md:max-w-[min(720px,78%)]">
+                     <div className={`border rounded-sm md:p-[13px_15px] p-[10px_12px] leading-[1.72] break-words ${
+                       msg.role === 'user'
+                         ? 'text-white border-[var(--color-accent)] bg-[var(--color-accent)] shadow-[8px_8px_0_rgba(232,74,95,0.14)]'
+                         : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
+                     }`}>
+                       {msg.role === 'user' ? (
+                         <span className="whitespace-pre-wrap">
+                           {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
+                         </span>
+                       ) : (
+                         msg.rawText === ""
+                            ? <span className="inline-flex gap-1 items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
+                              </span>
+                            : <MarkdownMessage rawText={msg.rawText || ""} />
+                       )}
+                     </div>
+                     {msg.role === 'assistant' && msg.docType && msg.rawText && (
+                       <button
+                         type="button"
+                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!)}
+                         className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-[rgba(17,17,17,0.16)] bg-white text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[#FDE047] hover:border-[#FACC15] transition-colors shadow-[4px_4px_0_rgba(17,17,17,0.06)]"
+                       >
+                         <span>⬇</span>
+                         <span>下载{msg.docType} Word 文档</span>
+                       </button>
                      )}
                    </div>
                 </article>
