@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   const validDocType = docType as DocType;
+  const debug = new URL(request.url).searchParams.get("debug") === "1";
   const templatePath = join(process.cwd(), "doc", "template", TEMPLATE_MAP[validDocType]);
 
   let templateContent: Buffer;
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
       },
     });
     const fields = extractDocFields(rawText, validDocType);
+    if (debug) return NextResponse.json({ fields });
     doc.render(fields);
     outputBuffer = doc.getZip().generate({ type: "nodebuffer" }) as Buffer;
   } catch (err) {
