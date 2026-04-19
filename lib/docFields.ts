@@ -2,10 +2,18 @@ export type DocType = "和解协议" | "民事起诉状" | "证据目录";
 
 type FieldMap = Record<string, string>;
 
+/** Returns fallback (default "___") when pattern has no match. */
 function e(text: string, pattern: RegExp, fallback = "___"): string {
   const m = text.match(pattern);
   const val = m ? (m[1] ?? "").trim().replace(/\*+/g, "").trim() : "";
   return val || fallback;
+}
+
+/** Like e() but returns "" on no match — safe for || chains. */
+function eFirst(text: string, pattern: RegExp): string {
+  const m = text.match(pattern);
+  const val = m ? (m[1] ?? "").trim().replace(/\*+/g, "").trim() : "";
+  return val;
 }
 
 function cleanText(rawText: string): string {
@@ -53,20 +61,20 @@ function extractSettlement(text: string): FieldMap {
 
   // Total compensation: "共计人民币1500元" / "总计1500元"
   const totalComp =
-    e(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
-    e(text, /(?:总计|合计)(?:人民币)?\s*([\d,.]+)\s*元/);
+    eFirst(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
+    eFirst(text, /(?:总计|合计)(?:人民币)?\s*([\d,.]+)\s*元/) || "___";
   const totalCn =
-    e(text, /共计(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
-    e(text, /(?:总计|合计)[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/);
+    eFirst(text, /共计(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
+    eFirst(text, /(?:总计|合计)[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) || "___";
 
   // Sub-total for other fees: "合计500元（大写：伍佰元整）"
   const otherTotal =
-    e(body, /误工费[\s\S]{0,120}?合计[：:\s]*([\d,.]+)\s*元/) ||
-    e(body, /合计[：:\s]*([\d,.]+)\s*元/) ||
-    e(text, /其他(?:合理)?费用[：:\s]*([\d,.]+)\s*元/);
+    eFirst(body, /误工费[\s\S]{0,120}?合计[：:\s]*([\d,.]+)\s*元/) ||
+    eFirst(body, /合计[：:\s]*([\d,.]+)\s*元/) ||
+    eFirst(text, /其他(?:合理)?费用[：:\s]*([\d,.]+)\s*元/) || "___";
   const otherTotalCn =
-    e(body, /合计[：:\s]*[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
-    e(text, /合计[\d,.]+元[（(]([^）)]+)[）)]/);
+    eFirst(body, /合计[：:\s]*[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
+    eFirst(text, /合计[\d,.]+元[（(]([^）)]+)[）)]/) || "___";
 
   return {
     // Party A — extracted from 甲方 section
@@ -87,8 +95,8 @@ function extractSettlement(text: string): FieldMap {
     accident_day:      accDate?.[3] ?? "___",
     accident_time:     e(text, /(\d{1,2})[时時](?:\d{2})?分?/) || "___",
     accident_location:
-      e(text, /(?:事故)?地点[：:]\s*([^\n,，。]{4,60})/) ||
-      e(text, /发生(?:于|在)\s*([^\n,，]{4,50})/),
+      eFirst(text, /(?:事故)?地点[：:]\s*([^\n,，。]{4,60})/) ||
+      eFirst(text, /发生(?:于|在)\s*([^\n,，]{4,50})/) || "___",
 
     // Vehicles
     car_a_plate: e(text, /甲方[\s\S]{0,500}?(?:车牌|号牌)[：:]\s*([^\n,，\s]{5,12})/),
@@ -135,35 +143,60 @@ function extractComplaint(text: string): FieldMap {
   const defendant1 = slice(text, /被告(?:一|1|（一）|[：\s])/, /被告(?:二|2|（二）)|保险公司|诉讼请求|事实/);
   const defendant2 = slice(text, /被告(?:二|2|（二）)|保险公司/, /诉讼请求|事实/);
 
+  // e()-based: returns "___" on failure (for standalone fields)
   const ep  = (p: RegExp, fb = "___") => e(plaintiff  || text, p, fb);
   const ed1 = (p: RegExp, fb = "___") => e(defendant1 || text, p, fb);
   const ed2 = (p: RegExp, fb = "___") => e(defendant2 || text, p, fb);
+  // eFirst()-based: returns "" on failure (safe for || chains)
+  const ep0  = (p: RegExp) => eFirst(plaintiff  || text, p);
+  const ed10 = (p: RegExp) => eFirst(defendant1 || text, p);
+  const ed20 = (p: RegExp) => eFirst(defendant2 || text, p);
 
-  const accDate = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日(?:[^\d]*(\d{1,2})[时:](\d{2})?)?/);
+  // Prefer date+time (accident) over birthdate; fall back to facts section then full text
+  const accDateWithTime = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日[^\d\n]{0,15}?(\d{1,2})[时時:](\d{2})?/);
+  const factsText = slice(text, /事实与理由|事实经过|事故经过/, /$/) || "";
+  const accDate = accDateWithTime ??
+    factsText.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/) ??
+    text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
   const today = new Date();
 
+  // Gender/nation: AI sometimes writes "，男，汉族" inline without separate labels
+  const pGN  = (plaintiff  || "").match(/[，,]\s*(男|女)[，,\s]*([^\n，,。]{1,5}族)/);
+  const d1GN = (defendant1 || "").match(/[，,]\s*(男|女)[，,\s]*([^\n，,。]{1,5}族)/);
+
   return {
-    plaintiff_name:    ep(/(?:姓名|原告)[：:\s]*([^\n,，（(\d]{2,15})/),
-    plaintiff_gender:  ep(/性别[：:]\s*(男|女)/),
-    plaintiff_nation:  ep(/民族[：:]\s*([^\n,，。、]{1,10})/),
+    plaintiff_name:
+      ep0(/姓名[：:]\s*([^\n,，（(\d]{2,15})/) ||
+      ep0(/原告[^：:\n]{0,10}[：:]\s*([^\n,，（(\d]{2,15})/) || "___",
+    plaintiff_gender:
+      ep0(/性别[：:]\s*(男|女)/) || pGN?.[1] || "___",
+    plaintiff_nation:
+      ep0(/民族[：:]\s*([^\n,，。、]{1,10})/) || pGN?.[2] || "___",
     plaintiff_id_no:   ep(/身份证(?:号(?:码)?)?[：:]\s*([\dXx]{15,18})/),
     plaintiff_address: ep(/(?:住(?:所|址)|地址)[：:]\s*([^\n,，。]{4,60})/),
     plaintiff_phone:   ep(/(?:电话|联系方式)[：:]\s*([\d\-\s]{7,15})/),
 
-    defendant1_name:    ed1(/(?:姓名|被告)[：:\s]*([^\n,，（(\d]{2,15})/),
-    defendant1_gender:  ed1(/性别[：:]\s*(男|女)/),
-    defendant1_nation:  ed1(/民族[：:]\s*([^\n,，。、]{1,10})/),
+    defendant1_name:
+      ed10(/姓名[：:]\s*([^\n,，（(\d]{2,15})/) ||
+      ed10(/被告[^：:\n]{0,15}[：:]\s*([^\n,，（(\d]{2,15})/) || "___",
+    defendant1_gender:
+      ed10(/性别[：:]\s*(男|女)/) || d1GN?.[1] || "___",
+    defendant1_nation:
+      ed10(/民族[：:]\s*([^\n,，。、]{1,10})/) || d1GN?.[2] || "___",
     defendant1_id_no:   ed1(/身份证(?:号(?:码)?)?[：:]\s*([\dXx]{15,18})/),
     defendant1_address: ed1(/(?:住(?:所|址)|地址)[：:]\s*([^\n,，。]{4,60})/),
     defendant1_phone:   ed1(/(?:电话|联系方式)[：:]\s*([\d\-\s]{7,15})/),
 
-    defendant2_company:      ed2(/([^\n,，（(\d]{4,30}保险[^\n,，]{0,10})/),
+    defendant2_company:
+      ed20(/(?:名称|单位名称|公司名称)[：:]\s*([^\n,，]{4,50})/) ||
+      ed20(/被告[^：:\n]{0,15}[：:]\s*([^\n,，（(\d]{4,50})/) ||
+      eFirst(text, /([^\n,，（(]{4,40}?保险[^\n,，）)]{0,15}(?:公司|股份))/) || "___",
     defendant2_credit_code:  ed2(/统一社会信用代码[：:]\s*([^\n,，\s]{15,20})/),
     defendant2_address:      ed2(/(?:住(?:所|址)|地址)[：:]\s*([^\n,，。]{4,60})/),
     defendant2_principal:    e(text, /(?:法定代表人|负责人)[：:]\s*([^\n,，]{2,15})/),
     defendant2_phone:        ed2(/(?:电话|联系方式)[：:]\s*([\d\-\s]{7,15})/),
 
-    // Fee amounts — AI often omits colon: "医疗费5000元"
+    // Fees — AI often writes "误工费5000元" without colon
     medical_fee:            e(text, /医疗费[：:\s]*([\d,.]+)\s*元/),
     food_fee:               e(text, /(?:住院)?伙食(?:补助)?费[：:\s]*([\d,.]+)\s*元/),
     nutrition_fee:          e(text, /营养费[：:\s]*([\d,.]+)\s*元/),
@@ -176,35 +209,69 @@ function extractComplaint(text: string): FieldMap {
     car_repair_fee:         e(text, /车辆维修费[：:\s]*([\d,.]+)\s*元/),
     other_loss:             e(text, /其他(?:损失|费用)[：:\s]*([\d,.]+)\s*元/),
     total_compensation:
-      e(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
-      e(text, /(?:合计|总计|赔偿总额)[：:\s]*([\d,.]+)\s*元/),
+      eFirst(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
+      eFirst(text, /(?:合计|总计|赔偿总额)[：:\s]*([\d,.]+)\s*元/) || "___",
     total_compensation_cn:
-      e(text, /共计(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
-      e(text, /(?:合计|总计)[\d,.]+元[（(]([^）)]+)[）)]/),
+      eFirst(text, /共计(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
+      eFirst(text, /(?:合计|总计)[\d,.]+元[（(]([^）)]+)[）)]/) || "___",
 
     accident_year:     accDate?.[1] ?? String(today.getFullYear()),
     accident_month:    accDate?.[2] ?? "___",
     accident_day:      accDate?.[3] ?? "___",
     accident_hour:     accDate?.[4] ?? "___",
     accident_minute:   accDate?.[5] ?? "00",
-    accident_location: e(text, /(?:事故)?地点[：:]\s*([^\n,，。]{4,60})/),
+    accident_location:
+      eFirst(text, /(?:事故)?地点[：:]\s*([^\n,，。]{4,60})/) ||
+      eFirst(text, /发生(?:于|在)\s*([^\n，,]{4,50})/) ||
+      eFirst(text, /(?:位于|在)([^\n，,]{4,50}(?:路|街|道|桥|路口|交叉口))/) || "___",
 
-    defendant1_car_plate:   e(text, /被告[\s\S]{0,500}?(?:车牌|号牌)[：:]\s*([^\n,，\s]{5,12})/),
-    plaintiff_car_plate:    e(text, /原告[\s\S]{0,500}?(?:车牌|号牌)[：:]\s*([^\n,，\s]{5,12})/),
-    police_dept:            e(text, /交警(?:大队|支队|局)[：:\s]*([^\n,，]{4,30})/),
-    police_branch:          e(text, /交警(?:中队|分队)[：:\s]*([^\n,，]{4,30})/),
-    accident_certificate_no: e(text, /责任认定书(?:编号)?[：:]\s*([^\n,，\s]{4,30})/),
-    defendant1_liability:   e(text, /被告[\s\S]{0,600}?(?:全责|主责|主要责任)[：(]?\s*([^\n,，.。（]{2,30})/),
-    plaintiff_liability:    e(text, /原告[\s\S]{0,600}?(?:次责|无责|次要责任)[：(]?\s*([^\n,，.。（]{2,30})/),
+    // Car plates: labeled format preferred; fall back to narrative "驾驶XXX轿车/电动车"
+    defendant1_car_plate:
+      eFirst(text, /被告[\s\S]{0,200}?(?:车牌|号牌)(?:号码)?[：:]\s*([^\n,，\s。]{5,12})/) ||
+      eFirst(text, /被告[\s\S]{0,100}?驾驶[的]?([^\s，,）)。（(]{5,12}?)(?:轿车|电动车|摩托车|车辆|汽车)/) || "___",
+    plaintiff_car_plate:
+      eFirst(plaintiff || "", /(?:车牌|号牌)(?:号码)?[：:]\s*([^\n,，\s。]{5,12})/) ||
+      eFirst(text, /原告[^\n，,]{0,10}?驾驶[的]?([^\s，,）)。（(]{5,12}?)(?:轿车|电动车|摩托车|车辆|汽车)/) || "___",
+
+    // Police unit: capture unit name ending in 大队/支队/局; exclude 。经由 to avoid mid-sentence capture
+    police_dept:
+      eFirst(text, /([^\n，,（(。经由\s]{2,15}?(?:公安局)?交警(?:大队|支队|总队|局))/) || "___",
+    // Sub-unit: "第X大队" or 中队/分队
+    police_branch:
+      eFirst(text, /(第[一二三四五六七八九十\d]+大队)/) ||
+      eFirst(text, /([^\n，,（(]{2,20}?交警(?:中队|分队))/) || "___",
+
+    // Certificate number: AI may write "认定书编号：" or "责任认定书："
+    accident_certificate_no:
+      eFirst(text, /(?:责任)?认定书编号[：:]\s*([^\n,，\s）)]{4,30})/) ||
+      eFirst(text, /责任认定书[：:]\s*([^\n,，\s）)]{4,30})/) || "___",
+
+    // Liability: capture the liability term itself
+    defendant1_liability:
+      eFirst(text, /被告[\s\S]{0,400}?(全责|全部责任|主要责任|主责)/) ||
+      eFirst(text, /被告[\s\S]{0,400}?责任[：:]\s*([^\n,，.。]{2,20})/) || "___",
+    plaintiff_liability:
+      eFirst(text, /原告[\s\S]{0,400}?(次要责任|次责|无责|不承担责任)/) ||
+      eFirst(text, /原告[\s\S]{0,400}?责任[：:]\s*([^\n,，.。]{2,20})/) || "___",
+
     treat_hospital:
-      e(text, /(?:就诊|治疗)医院[：:]\s*([^\n,，]{4,30})/) ||
-      e(text, /在([^\n,，]{2,20}(?:医院|卫生院|医疗中心))(?:住院|就医|治疗)/),
-    injury_diagnosis: e(text, /(?:伤情)?诊断[：:]\s*([^\n,，.。]{4,60})/),
-    hospital_days:    e(text, /住院[：:\s]*(\d+)\s*(?:天|日)/),
+      eFirst(text, /(?:就诊|治疗)医院[：:]\s*([^\n,，]{4,30})/) ||
+      eFirst(text, /(?:送往|经送|送至|送到|在|于)([^\n,，]{2,20}(?:医院|卫生院|医疗中心))(?:住院|就医|就诊|治疗)/) ||
+      eFirst(text, /([^\n,，]{2,20}(?:医院|卫生院|医疗中心))(?:就诊|住院|进行治疗)/) || "___",
+    // AI may write "诊断为：" instead of "诊断："
+    injury_diagnosis:
+      eFirst(text, /(?:伤情)?诊断为?[：:]\s*([^\n,，.。]{4,60})/) || "___",
+    hospital_days: e(text, /住院[：:\s]*(\d+)\s*(?:天|日)/),
+
     court_name:
-      e(text, /向([^\n,，]{2,20}(?:法院|法庭))(?:提起|递交|起诉)/) ||
-      e(text, /([^\n,，]{2,20}(?:人民法院))/),
-    plaintiff_signature: e(text, /原告[\s\S]{0,600}?(?:签名|签字)[：:]\s*([^\n,，]{2,20})/),
+      eFirst(text, /向([^\n,，]{2,20}(?:法院|法庭))(?:提起|递交|起诉)/) ||
+      eFirst(text, /([^\n,，]{2,20}人民法院)/) || "___",
+
+    // AI may write "具状人：" instead of "签名："
+    plaintiff_signature:
+      eFirst(text, /具状人[：:]\s*([^\n,，]{2,20})/) ||
+      eFirst(text, /原告[\s\S]{0,600}?(?:签名|签字)[：:]\s*([^\n,，]{2,20})/) || "___",
+
     file_year:  String(today.getFullYear()),
     file_month: String(today.getMonth() + 1),
     file_day:   String(today.getDate()),
