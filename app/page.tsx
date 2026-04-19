@@ -104,7 +104,7 @@ export default function Home() {
         actionType: selectedMode,
         ...(selectedMode === '咨询' ? { consultationMode: freeConsultationMode ? "free" : "guided" } : {}),
         ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
-        ...((selectedMode !== '咨询' || !freeConsultationMode) && Object.keys(userContext).length > 0
+        ...((selectedMode !== '咨询' || !freeConsultationMode) && selectedMode !== '文书' && Object.keys(userContext).length > 0
           ? { userContext: JSON.stringify(userContext) }
           : {})
       }
