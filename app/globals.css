@@ -12,7 +12,7 @@
   --color-border: #D7DCE2;
   --color-bg: #F5F7FA;
   --color-card: #FFFFFF;
-  --color-sidebar: #111111;
+  --color-sidebar: #2A2E37;
   --color-sidebar-active: #E84A5F;
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -26,8 +26,8 @@
 @layer base {
   body {
     background:
-      linear-gradient(90deg, rgba(17,17,17,0.035) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(17,17,17,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,0.018) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(17,17,17,0.014) 1px, transparent 1px),
       var(--color-bg);
     background-size: 42px 42px;
     font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
