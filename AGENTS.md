@@ -4,7 +4,7 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# LuXiaoLi Project Architecture & AI Agent Guidelines
+# LuXiaoLi (路小理) Project Architecture & AI Agent Guidelines
 
 ## 📁 Project Structure
 
