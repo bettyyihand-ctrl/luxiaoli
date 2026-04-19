@@ -248,22 +248,37 @@ export default function Home() {
   );
 
   const Sidebar = () => (
-    <aside className="fixed top-[var(--topbar-height)] left-0 bottom-0 z-10 w-[var(--sidebar-width)] p-5 lg:p-3 bg-[var(--color-sidebar)] text-white hidden md:block group hover:w-[220px] transition-all duration-300 overflow-hidden md:w-[56px] xl:w-[220px]">
-      <div className="before:content-['LEGAL_ROUTES'] before:block before:mx-2 before:mb-[18px] before:text-[#FDE047] before:text-[11px] before:font-semibold">
+    <aside className="hidden lg:flex flex-col w-[320px] pt-6 pr-6 border-r border-[rgba(45,58,74,0.08)] h-[calc(100vh-var(--topbar-height))] sticky top-0">
+      <div className="flex items-center gap-3 mb-10">
+        <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold">理</div>
+        <div>
+          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)] leading-tight">路小理</h2>
+          <span className="text-[12px] text-[var(--color-text-tertiary)]">LEXORA</span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 flex-1">
         {MODES.map(mode => (
           <button
             key={mode}
             onClick={() => setSelectedMode(mode)}
-            className={`w-full min-h-[44px] flex items-center gap-2.5 mb-2 p-2.5 rounded-sm border text-left whitespace-nowrap transition-colors ${
+            className={`w-full min-h-[56px] flex items-center gap-3 px-4 rounded-[var(--radius-lg)] text-left whitespace-nowrap transition-colors relative ${
               selectedMode === mode 
-                ? 'text-[#111] bg-[var(--color-sidebar-active)] border-[var(--color-sidebar-active)]' 
-                : 'text-[rgba(255,255,255,0.78)] bg-transparent border-[rgba(255,255,255,0.12)] hover:text-[#111] hover:bg-[var(--color-sidebar-active)] hover:border-[var(--color-sidebar-active)]'
+                ? 'bg-[var(--color-primary-bg)] text-[var(--color-text-primary)] font-medium before:content-[""] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-[var(--color-primary)] before:rounded-r-full'
+                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             <span className="w-6 shrink-0 text-center">{ICONS[mode]}</span>
-            <span className="md:opacity-0 xl:opacity-100 group-hover:opacity-100 transition-opacity">{mode}</span>
+            <span className="text-[15px]">{mode.replace('霍格沃茨', '调试')}</span>
           </button>
         ))}
+      </div>
+      <div className="mt-auto pb-6 flex flex-col gap-2">
+        <button className="flex items-center gap-2 px-4 py-2 text-[13px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors w-fit">
+          <span>⚠️</span>免责声明
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 text-[13px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors w-fit">
+          <span>🚪</span>退出
+        </button>
       </div>
     </aside>
   );
