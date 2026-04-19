@@ -19,26 +19,34 @@ export default function MarkdownMessage({ rawText }: Props) {
         skipHtml
         components={{
           table: ({ ...props }) => (
-            <div className="overflow-x-auto my-3 border border-[rgba(17,17,17,0.12)] rounded-sm">
+            <div className="overflow-x-auto my-3 border border-[var(--color-border-subtle)] rounded-[var(--radius-sm)]">
               <table className="min-w-full text-[13px] border-collapse" {...props} />
             </div>
           ),
-          thead: (props) => <thead className="bg-[#F5F7FA]" {...props} />,
+          thead: (props) => (
+            <thead className="bg-[var(--color-bg-subtle)]" {...props} />
+          ),
           th: (props) => (
-            <th className="border border-[rgba(17,17,17,0.08)] px-2.5 py-1.5 text-left font-semibold" {...props} />
+            <th
+              className="border border-[var(--color-border-subtle)] px-2.5 py-1.5 text-left font-semibold"
+              {...props}
+            />
           ),
           td: (props) => (
-            <td className="border border-[rgba(17,17,17,0.08)] px-2.5 py-1.5 align-top" {...props} />
+            <td
+              className="border border-[var(--color-border-subtle)] px-2.5 py-1.5 align-top"
+              {...props}
+            />
           ),
           strong: (props) => (
-            <strong className="font-semibold text-[#111]" {...props} />
+            <strong className="font-semibold text-[var(--color-text-primary)]" {...props} />
           ),
           a: ({ href, ...props }) => (
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-primary)] underline underline-offset-2"
+              className="text-[var(--color-primary-deep)] underline underline-offset-2"
               {...props}
             />
           ),
@@ -50,17 +58,25 @@ export default function MarkdownMessage({ rawText }: Props) {
           code: ({ className, children, ...rest }) => {
             const isBlock = /language-/.test(className || "");
             return isBlock ? (
-              <pre className="my-2 p-2.5 bg-[#F5F7FA] rounded-sm overflow-x-auto text-[12px]">
+              <pre className="my-2 p-2.5 bg-[var(--color-bg-subtle)] rounded-[var(--radius-sm)] overflow-x-auto text-[12px]">
                 <code className={className} {...rest}>{children}</code>
               </pre>
             ) : (
-              <code className="px-1 py-[1px] bg-[#F5F7FA] rounded-[3px] text-[12px]" {...rest}>{children}</code>
+              <code
+                className="px-1 py-[1px] bg-[var(--color-bg-subtle)] rounded-[4px] text-[12px]"
+                {...rest}
+              >
+                {children}
+              </code>
             );
           },
           blockquote: (props) => (
-            <blockquote className="border-l-2 border-[var(--color-primary)] pl-3 my-2 text-[var(--color-text-secondary)]" {...props} />
+            <blockquote
+              className="border-l-2 border-[var(--color-primary-soft)] pl-3 my-2 text-[var(--color-text-secondary)]"
+              {...props}
+            />
           ),
-          hr: () => <hr className="my-3 border-[rgba(17,17,17,0.08)]" />,
+          hr: () => <hr className="my-3 border-[var(--color-border-subtle)]" />,
           p: (props) => <p className="my-1.5 leading-[1.65]" {...props} />,
         }}
       >

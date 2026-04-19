@@ -1,60 +1,70 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0F766E;
-  --color-primary-light: #E6FFFA;
-  --color-accent: #E84A5F;
-  --color-success: #16A34A;
-  --color-warning: #B45309;
-  --color-danger: #DC2626;
-  --color-text-primary: #111111;
-  --color-text-secondary: #5F6673;
-  --color-border: #D7DCE2;
-  --color-bg: #F5F7FA;
-  --color-card: #FFFFFF;
-  --color-sidebar: #111111;
-  --color-sidebar-active: #E84A5F;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-card: 0 1px 0 rgba(17,17,17,0.08), 0 18px 40px rgba(17,17,17,0.06);
-  --shadow-panel: 0 28px 70px rgba(17,17,17,0.10);
-  --sidebar-width: 220px;
-  --topbar-height: 56px;
+  /* 背景层 */
+  --color-bg-base:         #E8EEF4;
+  --color-bg-card:         #FFFFFF;
+  --color-bg-subtle:       #F4F7FA;
+
+  /* 主题色（雾蓝）*/
+  --color-primary:         #6FA8DC;
+  --color-primary-soft:    #BBD4EA;
+  --color-primary-bg:      #DCE9F4;
+  --color-primary-deep:    #4A7FB0;
+
+  /* 马卡龙辅助色 */
+  --color-pastel-yellow:   #FBE8C8;
+  --color-pastel-pink:     #F5D8D4;
+  --color-pastel-mint:     #D4E8DC;
+  --color-pastel-lavender: #E0DCEA;
+
+  /* 文字层 */
+  --color-text-primary:    #2D3A4A;
+  --color-text-secondary:  #6B7889;
+  --color-text-tertiary:   #A0AAB8;
+  --color-text-on-primary: #FFFFFF;
+
+  /* 底部导航（黑色胶囊）*/
+  --color-nav-bg:          #1A1F2A;
+  --color-nav-icon:        #FFFFFF;
+  --color-nav-icon-idle:   #6B7280;
+
+  /* 边框（极少使用）*/
+  --color-border-subtle:   #E5EAF0;
+
+  /* 状态色（去饱和）*/
+  --color-success:         #7FB89A;
+  --color-warning:         #E8B57A;
+  --color-error:           #D89A9A;
+
+  /* 圆角（圆角是这套设计的灵魂）*/
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-pill: 999px;
+
+  /* 阴影（极轻、偏冷色调）*/
+  --shadow-soft:  0 4px 16px rgba(45, 58, 74, 0.06);
+  --shadow-card:  0 8px 24px rgba(45, 58, 74, 0.08);
+  --shadow-float: 0 12px 32px rgba(45, 58, 74, 0.12);
 }
 
 @layer base {
   body {
-    background:
-      linear-gradient(90deg, rgba(17,17,17,0.035) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(17,17,17,0.028) 1px, transparent 1px),
-      var(--color-bg);
-    background-size: 42px 42px;
-    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--color-bg-base);
+    font-family: var(--font-inter), "PingFang SC", var(--font-noto-sans), "Microsoft YaHei", sans-serif;
+    color: var(--color-text-primary);
   }
 }
 
 @layer utilities {
-  .clip-art {
-    clip-path: polygon(11% 0, 100% 0, 100% 100%, 0 100%, 0 18%);
-  }
-  
-  .bg-brand-multiply::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(15,118,110,0.52), rgba(232,74,95,0.16) 48%, rgba(253,224,71,0.18));
-    mix-blend-mode: multiply;
-  }
-  
   .animate-pulse-custom {
     animation: pulse-custom 1s infinite ease-in-out;
   }
-  
   .animate-toast-in {
     animation: toastIn 180ms ease;
   }
-  
   .animate-toast-out {
     animation: toastOut 180ms ease forwards;
   }
@@ -73,15 +83,16 @@
 
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(18px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes toastOut {
   to { opacity: 0; transform: translateX(18px); }
 }
 
-/* Some specific overwrites for elements that are easier mapped in CSS */
-.markdown-body ul, .markdown-body ol {
+/* Markdown 正文样式覆写 */
+.markdown-body ul,
+.markdown-body ol {
   margin: 8px 0;
   padding-left: 22px;
 }
@@ -89,7 +100,7 @@
   height: 1px;
   margin: 12px 0;
   border: 0;
-  background: var(--color-border);
+  background: var(--color-border-subtle);
 }
 .markdown-body p {
   margin: 0 0 8px;
