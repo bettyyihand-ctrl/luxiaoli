@@ -214,39 +214,39 @@ export default function Home() {
       <main className="min-h-[calc(100vh-var(--topbar-height))] md:ml-[56px] xl:ml-[var(--sidebar-width)] grid grid-rows-[auto_minmax(0,1fr)_auto] p-3 md:p-5 lg:p-7 gap-[14px]">
         {/* Mode Section & Artboard */}
         <section className="grid gap-2.5">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)] gap-[18px] min-h-[176px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.9)] shadow-[var(--shadow-card)] overflow-hidden">
-            <div className="grid content-center gap-2 p-[18px] md:p-[22px_24px]">
-              <span className="text-[var(--color-accent)] text-[11px] font-semibold">LEXORA / TRAFFIC DISPUTE ATELIER</span>
-              <h1 className="max-w-[760px] m-0 font-serif text-[clamp(30px,4.4vw,58px)] leading-[1.04] font-semibold">把事故线索，整理成可行动的答案。</h1>
-              <p className="max-w-[620px] m-0 text-[var(--color-text-secondary)] text-[15px] leading-[1.7]">证据、责任、赔偿、文书，在同一个对话里慢慢归位。</p>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(200px,0.5fr)] gap-0 min-h-[140px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.9)] shadow-[var(--shadow-card)] overflow-hidden">
+            <div className="grid content-center gap-1.5 p-[14px_18px] md:p-[18px_22px]">
+              <span className="text-[var(--color-accent)] text-[11px] font-semibold tracking-wider uppercase">交通纠纷助手 · Lexora</span>
+              <h1 className="max-w-[640px] m-0 font-serif text-[clamp(22px,3vw,40px)] leading-[1.12] font-semibold">把事故线索，整理成可行动的答案。</h1>
+              <p className="max-w-[560px] m-0 text-[var(--color-text-secondary)] text-[13px] leading-[1.6]">
+                {selectedMode === '计算' && "上传票据、责任认定书或描述案情，帮你估算赔偿项目。"}
+                {selectedMode === '咨询' && "描述事故经过或伤情，帮你梳理法律责任与维权途径。"}
+                {selectedMode === '文书' && "提供双方信息与诉求，为你起草交通纠纷法律文书。"}
+                {selectedMode === '霍格沃茨' && "调试模式：暴露系统内部 API 与 Context 状态。"}
+              </p>
             </div>
-            <figure className="relative min-h-[130px] md:min-h-[176px] m-0 bg-[#111] md:clip-art">
-              <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=960&q=82" alt="城市道路与车流" className="w-full h-full min-h-[130px] md:min-h-[176px] block object-cover grayscale-[0.1] contrast-[1.08] saturate-[0.86]" />
+            <figure className="relative min-h-[110px] md:min-h-0 m-0 bg-[#111] md:clip-art">
+              <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=960&q=82" alt="城市道路与车流" className="w-full h-full min-h-[110px] block object-cover grayscale-[0.1] contrast-[1.08] saturate-[0.86]" />
               <div className="absolute inset-0 bg-gradient-to-br from-[rgba(15,118,110,0.52)] via-[rgba(232,74,95,0.16)_48%] to-[rgba(253,224,71,0.18)] mix-blend-multiply"></div>
-              <figcaption className="absolute right-3 bottom-2.5 z-10 border border-[rgba(255,255,255,0.72)] rounded-sm px-2 py-1 text-white bg-[rgba(17,17,17,0.45)] text-[11px] font-semibold">CASE / ROUTE / CLAIM</figcaption>
             </figure>
           </div>
-          
-          <div className="w-full md:w-fit inline-grid grid-cols-4 p-[3px] border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)]">
-             {MODES.map(mode => (
-               <button
+
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-[var(--color-text-secondary)] text-[12px] font-medium hidden sm:block">功能模式</span>
+            <div className="flex-1 sm:flex-none inline-grid grid-cols-4 p-[3px] border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)]">
+              {MODES.map(mode => (
+                <button
                   key={mode}
                   onClick={() => setSelectedMode(mode)}
-                  className={`min-w-0 md:min-w-[88px] min-h-[34px] border-0 rounded-sm bg-transparent transition-colors text-sm ${
-                    selectedMode === mode ? 'text-[#111] bg-[#FDE047] font-semibold' : 'text-[var(--color-text-secondary)]'
+                  className={`min-w-0 sm:min-w-[80px] min-h-[34px] border-0 rounded-sm bg-transparent transition-colors text-[13px] ${
+                    selectedMode === mode ? 'text-[#111] bg-[#FDE047] font-semibold' : 'text-[var(--color-text-secondary)] hover:text-[#111]'
                   }`}
-               >
-                 {mode.replace('霍格沃茨', '调试')}
-               </button>
-             ))}
+                >
+                  {mode.replace('霍格沃茨', '调试')}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <p className="m-0 text-[var(--color-text-secondary)] text-[14px]">
-            {selectedMode === '计算' && "上传票据、责任认定书或描述案情，我会帮你估算交通事故赔偿项目。"}
-            {selectedMode === '咨询' && "描述交通事故经过或伤情，我会帮你梳理法律责任与维权途径。"}
-            {selectedMode === '文书' && "提供双方信息与诉求，我将为你起草相关的交通纠纷法律文书。"}
-            {selectedMode === '霍格沃茨' && "调试模式：可在此暴露系统内部 API 与 Context 状态。"}
-          </p>
 
           {process.env.NODE_ENV === 'development' && (
             <details className="border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] mt-2">
@@ -267,7 +267,14 @@ export default function Home() {
 
         {/* Chat Panel */}
         <section className="min-h-[260px] md:min-h-[360px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-panel)] overflow-hidden flex flex-col">
-          <div className="flex-1 max-h-[calc(100vh-284px)] md:max-h-[calc(100vh-250px)] overflow-y-auto p-3.5 md:p-6 scroll-smooth">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[rgba(17,17,17,0.08)] bg-[rgba(248,250,252,0.9)] shrink-0">
+            <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">对话</span>
+            <span className="text-[12px] text-[var(--color-text-secondary)] flex items-center gap-1">
+              <span>{ICONS[selectedMode]}</span>
+              <span>{selectedMode === '霍格沃茨' ? '调试' : selectedMode}模式</span>
+            </span>
+          </div>
+          <div className="flex-1 max-h-[calc(100vh-300px)] md:max-h-[calc(100vh-262px)] overflow-y-auto p-3.5 md:p-6 scroll-smooth">
             {messages.map((msg, i) => (
               <article key={msg.id || i} className={`flex items-start gap-2.5 md:mb-[18px] mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                  <div className={`w-8 h-8 shrink-0 grid place-items-center rounded-sm text-[15px] ${msg.role === 'user' ? 'order-2 text-white bg-[var(--color-accent)]' : 'text-[#111] bg-[#FDE047]'}`}>
