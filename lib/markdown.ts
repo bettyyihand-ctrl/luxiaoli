@@ -81,7 +81,7 @@ export function renderMarkdown(rawText: string) {
 }
 
 export function parseUserContext(rawText: string, currentContext: Record<string, unknown>) {
-  const regex = /<data>(.*?)<\/data>/gs;
+  const regex = /<data>([\s\S]*?)<\/data>/g;
   let match;
   let newContext = { ...currentContext };
   while ((match = regex.exec(rawText)) !== null) {

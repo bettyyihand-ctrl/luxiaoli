@@ -157,7 +157,12 @@ export default function Home() {
           <small className="block mt-[2px] text-[var(--color-text-secondary)] text-[11px] tracking-normal">Lexora</small>
         </span>
       </a>
-      <button className="border border-[rgba(17,17,17,0.14)] rounded-sm px-2.5 py-2 text-[var(--color-text-primary)] bg-white hover:bg-[#FDE047] transition-colors text-sm">免责声明</button>
+      <div className="flex items-center gap-3">
+        <button className="border border-[rgba(17,17,17,0.14)] rounded-sm px-2.5 py-1.5 text-[var(--color-text-primary)] bg-white hover:bg-[#FDE047] transition-colors text-[13px]">免责声明</button>
+        <form action="/api/logout" method="post" className="m-0">
+          <button type="submit" className="border border-[rgba(17,17,17,0.14)] rounded-sm px-2.5 py-1.5 text-white bg-[#111] hover:bg-[#E84A5F] transition-colors text-[13px] font-medium cursor-pointer">退出</button>
+        </form>
+      </div>
     </header>
   );
 
