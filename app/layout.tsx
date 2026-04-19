@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_SC, Noto_Serif_SC } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const notoSans = Noto_Sans_SC({
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${notoSans.variable} ${notoSerif.variable} h-full antialiased`}
     >
-      <body className="h-full m-0 text-[var(--color-text-primary)]">{children}</body>
+      <body className="h-full m-0 text-[var(--color-text-primary)]">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
