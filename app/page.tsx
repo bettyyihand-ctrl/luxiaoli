@@ -21,6 +21,7 @@ const CONSULTATION_PROMPTS = [
 
 export default function Home() {
   const [selectedMode, setSelectedMode] = useState<ActionMode>("计算");
+  const [selectedDocType, setSelectedDocType] = useState<"和解协议" | "民事起诉状" | "证据目录">("和解协议");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [userContext, setUserContext] = useState<Record<string, unknown>>({});
@@ -317,6 +318,22 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {selectedMode === '文书' && (
+            <div className="w-full md:w-fit inline-grid grid-cols-3 p-[3px] border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)]">
+              {(["和解协议", "民事起诉状", "证据目录"] as const).map(docType => (
+                <button
+                  key={docType}
+                  onClick={() => setSelectedDocType(docType)}
+                  className={`min-w-0 md:min-w-[96px] min-h-[34px] border-0 rounded-sm bg-transparent transition-colors text-sm ${
+                    selectedDocType === docType ? 'text-[#111] bg-[#FDE047] font-semibold' : 'text-[var(--color-text-secondary)]'
+                  }`}
+                >
+                  {docType}
+                </button>
+              ))}
+            </div>
+          )}
 
           {process.env.NODE_ENV === 'development' && (
             <details className="border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] mt-2">
