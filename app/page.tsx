@@ -5,6 +5,8 @@ import { ActionMode, Message } from "@/lib/types";
 import { parseUserContext } from "@/lib/markdown";
 import MarkdownMessage from "@/components/MarkdownMessage";
 
+const CASE_MEMORY_STORAGE_KEY = "lexora_case_memory_v1";
+
 const MODES: ActionMode[] = process.env.NODE_ENV === 'development'
   ? ["计算", "咨询", "文书", "霍格沃茨"]
   : ["计算", "咨询", "文书"];
@@ -26,6 +28,8 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [userContext, setUserContext] = useState<Record<string, unknown>>({});
+  const [lawsuitDraft, setLawsuitDraft] = useState("");
+  const [consultationNotes, setConsultationNotes] = useState("");
   const [inputText, setInputText] = useState("");
   const [freeConsultationMode, setFreeConsultationMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,6 +50,44 @@ export default function Home() {
       content: [{ type: "text", text: "你好，我是路小理。你可以描述交通事故经过、上传票据或责任认定材料，我会帮你整理赔偿、咨询和文书思路。" }]
     }]);
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CASE_MEMORY_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        lawsuitDraft?: unknown;
+        consultationNotes?: unknown;
+        userContext?: unknown;
+      };
+      if (typeof parsed.lawsuitDraft === "string") {
+        setLawsuitDraft(parsed.lawsuitDraft);
+      }
+      if (typeof parsed.consultationNotes === "string") {
+        setConsultationNotes(parsed.consultationNotes);
+      }
+      if (parsed.userContext && typeof parsed.userContext === "object" && !Array.isArray(parsed.userContext)) {
+        setUserContext(parsed.userContext as Record<string, unknown>);
+      }
+    } catch {
+      // ignore localStorage parse errors
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        CASE_MEMORY_STORAGE_KEY,
+        JSON.stringify({
+          lawsuitDraft,
+          consultationNotes,
+          userContext
+        })
+      );
+    } catch {
+      // ignore localStorage write errors
+    }
+  }, [lawsuitDraft, consultationNotes, userContext]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,6 +146,12 @@ export default function Home() {
         actionType: selectedMode,
         ...(selectedMode === '咨询' ? { consultationMode: freeConsultationMode ? "free" : "guided" } : {}),
         ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
+        ...((lawsuitDraft.trim() || consultationNotes.trim()) ? {
+          legalMemory: JSON.stringify({
+            lawsuitDraft: lawsuitDraft.trim(),
+            consultationNotes: consultationNotes.trim()
+          })
+        } : {}),
         ...((selectedMode !== '咨询' || !freeConsultationMode) && Object.keys(userContext).length > 0
           ? { userContext: JSON.stringify(userContext) }
           : {})
@@ -233,6 +281,17 @@ export default function Home() {
     }
   };
 
+  const clearCaseMemory = () => {
+    setLawsuitDraft("");
+    setConsultationNotes("");
+    setUserContext({});
+    try {
+      window.localStorage.removeItem(CASE_MEMORY_STORAGE_KEY);
+    } catch {
+      // ignore localStorage remove errors
+    }
+  };
+
   const TopBar = () => (
     <header className="fixed top-0 left-0 right-0 z-20 h-[var(--topbar-height)] flex items-center justify-between px-6 border-b border-[rgba(17,17,17,0.12)] bg-[rgba(245,247,250,0.88)] backdrop-blur-md">
       <a className="inline-flex items-center gap-2.5 min-w-0 text-inherit no-underline" href="#app">
@@ -350,6 +409,46 @@ export default function Home() {
                 </button>
               ))}
             </div>
+          )}
+
+          {(selectedMode === "咨询" || selectedMode === "文书") && (
+            <section className="grid gap-2.5 border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] p-3 md:p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="m-0 text-[13px] font-semibold text-[var(--color-text-primary)]">案件记忆（文书 + 咨询联动）</h2>
+                <button
+                  type="button"
+                  onClick={clearCaseMemory}
+                  className="min-h-[30px] px-2.5 rounded-sm border border-[rgba(17,17,17,0.12)] text-[12px] text-[var(--color-text-secondary)] bg-white hover:text-[#111] hover:border-[var(--color-primary)] transition-colors"
+                >
+                  清空记忆
+                </button>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                <label className="grid gap-1">
+                  <span className="text-[12px] text-[var(--color-text-secondary)]">起诉状/文书要点</span>
+                  <textarea
+                    rows={4}
+                    value={lawsuitDraft}
+                    onChange={(e) => setLawsuitDraft(e.target.value)}
+                    placeholder="粘贴民事起诉状核心内容：事实经过、诉讼请求、证据要点..."
+                    className="w-full resize-y border border-[rgba(17,17,17,0.12)] rounded-sm p-2.5 text-[13px] text-[var(--color-text-primary)] bg-[#F8FAFC] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
+                  />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[12px] text-[var(--color-text-secondary)]">咨询补充记忆</span>
+                  <textarea
+                    rows={4}
+                    value={consultationNotes}
+                    onChange={(e) => setConsultationNotes(e.target.value)}
+                    placeholder="记录你关心的问题、对方抗辩、法官关注点、沟通进展..."
+                    className="w-full resize-y border border-[rgba(17,17,17,0.12)] rounded-sm p-2.5 text-[13px] text-[var(--color-text-primary)] bg-[#F8FAFC] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
+                  />
+                </label>
+              </div>
+              <p className="m-0 text-[12px] text-[var(--color-text-secondary)] leading-[1.55]">
+                上述内容会随浏览器本地缓存保留，并在「咨询/文书」提问时一并发送给模型，帮助保持上下文连续性。
+              </p>
+            </section>
           )}
 
           {process.env.NODE_ENV === 'development' && (
