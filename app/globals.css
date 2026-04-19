@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0F766E;
+  --color-primary-light: #E6FFFA;
+  --color-accent: #E84A5F;
+  --color-success: #16A34A;
+  --color-warning: #B45309;
+  --color-danger: #DC2626;
+  --color-text-primary: #111111;
+  --color-text-secondary: #5F6673;
+  --color-border: #D7DCE2;
+  --color-bg: #F5F7FA;
+  --color-card: #FFFFFF;
+  --color-sidebar: #111111;
+  --color-sidebar-active: #E84A5F;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+@layer base {
+  body {
+    background:
+      linear-gradient(90deg, rgba(17,17,17,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(17,17,17,0.028) 1px, transparent 1px),
+      var(--color-bg);
+    background-size: 42px 42px;
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}
+
+@layer utilities {
+  .clip-art {
+    clip-path: polygon(11% 0, 100% 0, 100% 100%, 0 100%, 0 18%);
+  }
+  
+  .bg-brand-multiply::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15,118,110,0.52), rgba(232,74,95,0.16) 48%, rgba(253,224,71,0.18));
+    mix-blend-mode: multiply;
+  }
+  
+  .animate-pulse-custom {
+    animation: pulse-custom 1s infinite ease-in-out;
+  }
+  
+  .animate-toast-in {
+    animation: toastIn 180ms ease;
+  }
+  
+  .animate-toast-out {
+    animation: toastOut 180ms ease forwards;
+  }
+}
+
+@keyframes pulse-custom {
+  0%, 80%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(18px); }
+}
+
+/* Some specific overwrites for elements that are easier mapped in CSS */
+.markdown-body ul, .markdown-body ol {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+.markdown-body hr {
+  height: 1px;
+  margin: 12px 0;
+  border: 0;
+  background: var(--color-border);
+}
+.markdown-body p {
+  margin: 0 0 8px;
+}
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}

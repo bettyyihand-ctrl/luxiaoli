@@ -1,0 +1,315 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { ActionMode, Message } from "@/lib/types";
+import { renderMarkdown, parseUserContext } from "@/lib/markdown";
+
+const MODES: ActionMode[] = ["计算", "咨询", "文书", "霍格沃茨"];
+const ICONS: Record<ActionMode, string> = {
+  "计算": "🧮",
+  "咨询": "💬",
+  "文书": "📄",
+  "霍格沃茨": "🪄"
+};
+
+export default function Home() {
+  const [selectedMode, setSelectedMode] = useState<ActionMode>("计算");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [userContext, setUserContext] = useState<Record<string, unknown>>({});
+  const [inputText, setInputText] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // API Debug states
+  const [apiRequestLog, setApiRequestLog] = useState("尚未发送请求。");
+  const [apiResponseLog, setApiResponseLog] = useState("尚未收到返回。");
+
+  useEffect(() => {
+    // Welcome message
+    setMessages([{
+      id: "welcome",
+      role: "assistant",
+      content: [{ type: "text", text: "你好，我是路小理。你可以描述交通事故经过、上传票据或责任认定材料，我会帮你整理赔偿、咨询和文书思路。" }]
+    }]);
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (isSending || (!inputText.trim())) return;
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: [{ type: "text", text: inputText.trim() }]
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText("");
+    setIsSending(true);
+
+    const apiPayload = {
+      messages: messages.concat(userMessage).filter(m => m.id !== "welcome").map(m => ({
+        role: m.role,
+        content: m.content
+      })),
+      custom_variables: {
+        actionType: selectedMode,
+        ...(Object.keys(userContext).length > 0 ? { userContext: JSON.stringify(userContext) } : {})
+      }
+    };
+
+    setApiRequestLog(JSON.stringify({
+      url: '/api/chat',
+      method: 'POST',
+      body: apiPayload
+    }, null, 2));
+    setApiResponseLog("正在等待 API 返回...");
+
+    const aiMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "" }]);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(apiPayload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      setApiResponseLog(`HTTP ${response.status} ${response.statusText}\n\n`);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      if (reader) {
+        let aiFullText = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          setApiResponseLog(prev => prev + chunk);
+          buffer += chunk;
+          
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data:")) continue;
+            
+            const dataStr = trimmed.slice(5).trim();
+            if (dataStr === "[DONE]") continue;
+
+            try {
+               const data = JSON.parse(dataStr);
+               const delta = data.choices?.[0]?.delta?.content;
+               if (delta) {
+                 aiFullText += delta;
+                 setMessages(prev => prev.map(m => {
+                   if (m.id === aiMessageId) {
+                     return { ...m, rawText: aiFullText, content: [{ type: "text", text: aiFullText }] };
+                   }
+                   return m;
+                 }));
+                 // Stream user context parsing as well
+                 const newCtx = parseUserContext(aiFullText, userContext);
+                 setUserContext(newCtx);
+               }
+            } catch (e) {
+               // ignore parse errors for chunks
+            }
+          }
+        }
+        
+        setApiResponseLog(prev => prev + `\n\n最终文本：\n${aiFullText}`);
+      }
+    } catch (e: unknown) {
+      setMessages(prev => prev.map(m => {
+         if (m.id === aiMessageId) {
+           return { ...m, rawText: "请求失败，请稍后重试。", content: [{ type: "text", text: "请求失败，请稍后重试。" }] };
+         }
+         return m;
+      }));
+      if (e instanceof Error) {
+        setApiResponseLog(prev => prev + `\n\nError: ${e.message}`);
+      }
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const TopBar = () => (
+    <header className="fixed top-0 left-0 right-0 z-20 h-[var(--topbar-height)] flex items-center justify-between px-6 border-b border-[rgba(17,17,17,0.12)] bg-[rgba(245,247,250,0.88)] backdrop-blur-md">
+      <a className="inline-flex items-center gap-2.5 min-w-0 text-inherit no-underline" href="#app">
+        <span className="w-[34px] h-[34px] grid place-items-center rounded-sm text-[#111] bg-[#FDE047] font-serif font-semibold">路</span>
+        <span>
+          <strong className="block font-serif text-[20px] leading-none">路小理</strong>
+          <small className="block mt-[2px] text-[var(--color-text-secondary)] text-[11px] tracking-normal">Lexora</small>
+        </span>
+      </a>
+      <button className="border border-[rgba(17,17,17,0.14)] rounded-sm px-2.5 py-2 text-[var(--color-text-primary)] bg-white hover:bg-[#FDE047] transition-colors text-sm">免责声明</button>
+    </header>
+  );
+
+  const Sidebar = () => (
+    <aside className="fixed top-[var(--topbar-height)] left-0 bottom-0 z-10 w-[var(--sidebar-width)] p-5 lg:p-3 bg-[var(--color-sidebar)] text-white hidden md:block group hover:w-[220px] transition-all duration-300 overflow-hidden md:w-[56px] xl:w-[220px]">
+      <div className="before:content-['LEGAL_ROUTES'] before:block before:mx-2 before:mb-[18px] before:text-[#FDE047] before:text-[11px] before:font-semibold">
+        {MODES.map(mode => (
+          <button
+            key={mode}
+            onClick={() => setSelectedMode(mode)}
+            className={`w-full min-h-[44px] flex items-center gap-2.5 mb-2 p-2.5 rounded-sm border text-left whitespace-nowrap transition-colors ${
+              selectedMode === mode 
+                ? 'text-[#111] bg-[var(--color-sidebar-active)] border-[var(--color-sidebar-active)]' 
+                : 'text-[rgba(255,255,255,0.78)] bg-transparent border-[rgba(255,255,255,0.12)] hover:text-[#111] hover:bg-[var(--color-sidebar-active)] hover:border-[var(--color-sidebar-active)]'
+            }`}
+          >
+            <span className="w-6 shrink-0 text-center">{ICONS[mode]}</span>
+            <span className="md:opacity-0 xl:opacity-100 group-hover:opacity-100 transition-opacity">{mode}</span>
+          </button>
+        ))}
+      </div>
+    </aside>
+  );
+
+  const MobileTabs = () => (
+    <nav className="fixed left-0 right-0 bottom-0 z-25 h-[56px] grid grid-cols-4 border-t border-[var(--color-border)] bg-[rgba(255,255,255,0.94)] backdrop-blur-md md:hidden">
+      {MODES.map(mode => (
+        <button
+          key={mode}
+          onClick={() => setSelectedMode(mode)}
+          className={`grid place-items-center gap-px border-0 text-[12px] transition-colors ${
+            selectedMode === mode ? 'text-[var(--color-primary)] font-semibold' : 'text-[var(--color-text-secondary)] bg-transparent'
+          }`}
+        >
+          <span className="text-[18px]">{ICONS[mode]}</span>
+          {mode.replace('霍格沃茨', '调试')}
+        </button>
+      ))}
+    </nav>
+  );
+
+  return (
+    <div className="min-h-screen pt-[var(--topbar-height)]">
+      <TopBar />
+      <Sidebar />
+
+      <main className="min-h-[calc(100vh-var(--topbar-height))] md:ml-[56px] xl:ml-[var(--sidebar-width)] grid grid-rows-[auto_minmax(0,1fr)_auto] p-3 md:p-5 lg:p-7 gap-[14px]">
+        {/* Mode Section & Artboard */}
+        <section className="grid gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)] gap-[18px] min-h-[176px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.9)] shadow-[var(--shadow-card)] overflow-hidden">
+            <div className="grid content-center gap-2 p-[18px] md:p-[22px_24px]">
+              <span className="text-[var(--color-accent)] text-[11px] font-semibold">LEXORA / TRAFFIC DISPUTE ATELIER</span>
+              <h1 className="max-w-[760px] m-0 font-serif text-[clamp(30px,4.4vw,58px)] leading-[1.04] font-semibold">把事故线索，整理成可行动的答案。</h1>
+              <p className="max-w-[620px] m-0 text-[var(--color-text-secondary)] text-[15px] leading-[1.7]">证据、责任、赔偿、文书，在同一个对话里慢慢归位。</p>
+            </div>
+            <figure className="relative min-h-[130px] md:min-h-[176px] m-0 bg-[#111] md:clip-art">
+              <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=960&q=82" alt="城市道路与车流" className="w-full h-full min-h-[130px] md:min-h-[176px] block object-cover grayscale-[0.1] contrast-[1.08] saturate-[0.86]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[rgba(15,118,110,0.52)] via-[rgba(232,74,95,0.16)_48%] to-[rgba(253,224,71,0.18)] mix-blend-multiply"></div>
+              <figcaption className="absolute right-3 bottom-2.5 z-10 border border-[rgba(255,255,255,0.72)] rounded-sm px-2 py-1 text-white bg-[rgba(17,17,17,0.45)] text-[11px] font-semibold">CASE / ROUTE / CLAIM</figcaption>
+            </figure>
+          </div>
+          
+          <div className="w-full md:w-fit inline-grid grid-cols-4 p-[3px] border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)]">
+             {MODES.map(mode => (
+               <button
+                  key={mode}
+                  onClick={() => setSelectedMode(mode)}
+                  className={`min-w-0 md:min-w-[88px] min-h-[34px] border-0 rounded-sm bg-transparent transition-colors text-sm ${
+                    selectedMode === mode ? 'text-[#111] bg-[#FDE047] font-semibold' : 'text-[var(--color-text-secondary)]'
+                  }`}
+               >
+                 {mode.replace('霍格沃茨', '调试')}
+               </button>
+             ))}
+          </div>
+
+          <p className="m-0 text-[var(--color-text-secondary)] text-[14px]">
+            {selectedMode === '计算' && "上传票据、责任认定书或描述案情，我会帮你估算交通事故赔偿项目。"}
+            {selectedMode === '咨询' && "描述交通事故经过或伤情，我会帮你梳理法律责任与维权途径。"}
+            {selectedMode === '文书' && "提供双方信息与诉求，我将为你起草相关的交通纠纷法律文书。"}
+            {selectedMode === '霍格沃茨' && "调试模式：可在此暴露系统内部 API 与 Context 状态。"}
+          </p>
+
+          <details className="border border-[rgba(17,17,17,0.14)] rounded-sm bg-white shadow-[var(--shadow-card)] mt-2">
+            <summary className="min-h-[38px] flex items-center px-3 text-[var(--color-accent)] text-[13px] font-semibold select-none cursor-pointer">API 调试：查看本次请求和返回</summary>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
+              <article className="min-w-0">
+                <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">请求 payload</h3>
+                <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiRequestLog}</pre>
+              </article>
+              <article className="min-w-0">
+                <h3 className="m-[0_0_6px] text-[var(--color-text-secondary)] text-[12px] font-semibold">返回内容</h3>
+                <pre className="min-h-[112px] max-h-[240px] overflow-auto m-0 border border-[var(--color-border)] rounded-sm p-2.5 text-[#0F172A] bg-[#F8FAFC] font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words">{apiResponseLog}</pre>
+              </article>
+            </div>
+          </details>
+        </section>
+
+        {/* Chat Panel */}
+        <section className="min-h-[260px] md:min-h-[360px] border border-[rgba(17,17,17,0.14)] rounded-sm bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-panel)] overflow-hidden flex flex-col">
+          <div className="flex-1 max-h-[calc(100vh-284px)] md:max-h-[calc(100vh-250px)] overflow-y-auto p-3.5 md:p-6 scroll-smooth">
+            {messages.map((msg, i) => (
+              <article key={msg.id || i} className={`flex items-start gap-2.5 md:mb-[18px] mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                 <div className={`w-8 h-8 shrink-0 grid place-items-center rounded-sm text-[15px] ${msg.role === 'user' ? 'order-2 text-white bg-[var(--color-accent)]' : 'text-[#111] bg-[#FDE047]'}`}>
+                   {msg.role === 'user' ? '你' : '理'}
+                 </div>
+                 <div className={`max-w-[86%] md:max-w-[min(720px,78%)] border rounded-sm md:p-[13px_15px] p-[10px_12px] leading-[1.72] break-words ${
+                   msg.role === 'user' 
+                     ? 'text-white border-[var(--color-accent)] bg-[var(--color-accent)] shadow-[8px_8px_0_rgba(232,74,95,0.14)]' 
+                     : 'border-[rgba(17,17,17,0.12)] bg-white shadow-[8px_8px_0_rgba(17,17,17,0.035)] markdown-body'
+                 }`}>
+                   {msg.role === 'user' ? (
+                     msg.content.find(c => c.type === 'text')?.text || '已发送内容'
+                   ) : (
+                     msg.rawText === "" 
+                        ? <span className="inline-flex gap-1 items-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
+                          </span>
+                        : <div dangerouslySetInnerHTML={renderMarkdown(msg.rawText || "")} />
+                   )}
+                 </div>
+              </article>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </section>
+
+        {/* Composer */}
+        <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
+           <button type="button" className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
+           <textarea 
+             rows={1}
+             value={inputText}
+             onChange={e => setInputText(e.target.value)}
+             disabled={isSending}
+             onKeyDown={e => {
+               if (e.key === 'Enter' && !e.shiftKey) {
+                 e.preventDefault();
+                 handleSend();
+               }
+             }}
+             placeholder="描述事故经过、伤情、费用或想咨询的问题..."
+             className="w-full min-h-[42px] max-h-[148px] resize-none border border-transparent rounded-sm p-[9px_10px] text-[var(--color-text-primary)] bg-[#F5F7FA] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
+           />
+           <button type="submit" disabled={isSending} className="min-h-[42px] border-0 rounded-sm text-white bg-[#111] font-semibold hover:bg-[var(--color-accent)] disabled:opacity-56 disabled:cursor-not-allowed transition-colors">发送</button>
+        </form>
+
+      </main>
+
+      <MobileTabs />
+    </div>
+  );
+}
