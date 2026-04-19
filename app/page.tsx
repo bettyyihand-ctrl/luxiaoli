@@ -30,7 +30,9 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortControllerRef = useRef<AbortController | null>(null);
-  
+  const [attachTipVisible, setAttachTipVisible] = useState(false);
+  const attachTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // API Debug states
   const [apiRequestLog, setApiRequestLog] = useState("尚未发送请求。");
   const [apiResponseLog, setApiResponseLog] = useState("尚未收到返回。");
@@ -51,8 +53,17 @@ export default function Home() {
   useEffect(() => {
     return () => {
       streamAbortControllerRef.current?.abort();
+      if (attachTipTimerRef.current) clearTimeout(attachTipTimerRef.current);
     };
   }, []);
+
+  const handleAttachClick = () => {
+    if (attachTipTimerRef.current) clearTimeout(attachTipTimerRef.current);
+    setAttachTipVisible(true);
+    attachTipTimerRef.current = setTimeout(() => {
+      setAttachTipVisible(false);
+    }, 2500);
+  };
 
   const autoResizeTextarea = () => {
     const el = textareaRef.current;
@@ -410,8 +421,18 @@ export default function Home() {
             ))}
           </section>
         )}
-        <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
-           <button type="button" className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
+        <div className="relative">
+          {attachTipVisible && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="absolute left-4 bottom-full mb-2 max-w-[420px] w-[calc(100%-2rem)] rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#374151] shadow-md transition-opacity duration-200 opacity-100 z-20"
+            >
+              📎 票据与责任认定书图片识别功能即将上线，当前版本请在对话框中直接描述关键信息（如责任比例、伤残等级等）
+            </div>
+          )}
+          <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
+           <button type="button" aria-label="附件功能" onClick={handleAttachClick} className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
            <textarea 
              ref={textareaRef}
              rows={1}
@@ -431,7 +452,8 @@ export default function Home() {
              className="w-full min-h-[42px] max-h-[148px] resize-none border border-transparent rounded-sm p-[9px_10px] text-[var(--color-text-primary)] bg-[#F5F7FA] leading-[1.55] outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
            />
            <button type="submit" disabled={isSending} className="min-h-[42px] border-0 rounded-sm text-white bg-[#111] font-semibold hover:bg-[var(--color-accent)] disabled:opacity-56 disabled:cursor-not-allowed transition-colors">发送</button>
-        </form>
+          </form>
+        </div>
 
       </main>
 
