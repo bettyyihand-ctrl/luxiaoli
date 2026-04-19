@@ -290,9 +290,9 @@ export default function Home() {
   );
 
   const DesktopSidebar = () => (
-    <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-10 w-[320px] bg-white border-r border-[var(--color-border)] pt-0">
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="mb-8 pb-6 border-b border-[var(--color-border)]">
+    <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-10 w-[320px] bg-white border-r border-[var(--color-border)] pt-6">
+      <div className="flex-1 p-6 overflow-y-auto flex flex-col">
+        <div className="mb-8 pb-6 border-b border-[var(--color-border)] shrink-0">
           <a className="inline-flex items-center gap-3 text-inherit no-underline mb-2" href="#app">
             <span className="w-[44px] h-[44px] grid place-items-center rounded-[12px] text-white bg-[var(--color-primary)] font-serif font-semibold text-[20px]">路</span>
             <div>
@@ -302,7 +302,7 @@ export default function Home() {
           </a>
         </div>
 
-        <div className="space-y-2 mb-8">
+        <div className="space-y-2 mb-8 shrink-0">
           <p className="text-[12px] font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3">功能模式</p>
           {MODES.filter(m => m !== "霍格沃茨").map(mode => (
             <button
@@ -322,10 +322,12 @@ export default function Home() {
           ))}
         </div>
 
+        <div className="flex-1" />
+
         {process.env.NODE_ENV === 'development' && (
           <button
             onClick={() => setSelectedMode("霍格沃茨")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-lg)] text-left transition-all border-l-3 ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-lg)] text-left transition-all border-l-3 mb-2 ${
               selectedMode === "霍格沃茨"
                 ? "bg-[var(--color-primary-bg)] text-[var(--color-text-primary)] border-l-[var(--color-primary)] font-medium shadow-sm"
                 : "text-[var(--color-text-secondary)] border-l-transparent hover:bg-[var(--color-bg-subtle)]"
@@ -339,7 +341,7 @@ export default function Home() {
         )}
       </div>
 
-      <div className="border-t border-[var(--color-border)] p-6 space-y-2">
+      <div className="border-t border-[var(--color-border)] p-6 space-y-2 shrink-0">
         <button className="w-full inline-flex items-center gap-2 justify-center px-4 py-2.5 text-[13px] text-[var(--color-text-secondary)] bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-primary-bg)] transition-colors">
           <Info size={16} strokeWidth={1.5} />
           免责声明
@@ -386,10 +388,10 @@ export default function Home() {
       <TopBar />
       <DesktopSidebar />
 
-      <main className="min-h-screen lg:ml-[320px] flex flex-col p-4 md:p-6 lg:p-8 gap-6 pb-24 lg:pb-8">
-        <div className="max-w-[1024px] mx-auto w-full flex-1">
+      <main className="h-screen lg:ml-[320px] flex flex-col p-4 md:p-6 lg:p-8 gap-6 pb-24 lg:pb-8 overflow-hidden">
+        <div className="max-w-[1024px] mx-auto w-full flex-1 flex flex-col gap-6 overflow-hidden">
         {/* Header & Function Cards */}
-        <section className="grid gap-6">
+        <section className="grid gap-6 shrink-0">
           <div className="text-center max-w-2xl mx-auto">
             <h1 className="text-[28px] md:text-[32px] font-[600] text-[var(--color-text-primary)] mb-2 font-serif">路小理助手</h1>
             <p className="text-[15px] text-[var(--color-text-secondary)] leading-[1.6]">
@@ -463,7 +465,7 @@ export default function Home() {
 
         {/* Chat Panel / Initial Hero */}
         {messages.some(m => m.id !== "welcome") ? (
-          <section className="min-h-[320px] border border-[var(--color-border)] rounded-[var(--radius-lg)] bg-white shadow-[var(--shadow-md)] overflow-hidden flex flex-col">
+          <section className="flex-1 flex flex-col bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-md)] overflow-hidden min-h-0">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)] shrink-0">
               <span className="text-[14px] font-semibold text-[var(--color-text-primary)]">对话</span>
               <span className="text-[12px] text-[var(--color-text-secondary)] flex items-center gap-1.5">
@@ -471,7 +473,7 @@ export default function Home() {
                 <span>{selectedMode === '霍格沃茨' ? '调试' : selectedMode}模式</span>
               </span>
             </div>
-            <div className="flex-1 max-h-[calc(100vh-400px)] overflow-y-auto p-6 scroll-smooth">
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth min-h-0">
               {messages.map((msg, i) => (
                 <article key={msg.id || i} className={`flex items-start gap-3 mb-5 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                    <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-[8px] text-[14px] font-medium ${
@@ -506,7 +508,7 @@ export default function Home() {
             </div>
           </section>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 py-12 select-none">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 select-none min-h-0">
             <p className="m-0 text-[48px] leading-none">💭</p>
             <p className="m-0 font-serif text-[20px] text-[var(--color-text-primary)]">开始对话</p>
             <p className="m-0 text-[14px] text-[var(--color-text-secondary)]">选择一个功能模式，描述你的情况</p>
@@ -515,7 +517,7 @@ export default function Home() {
 
         {/* Quick Prompts */}
         {selectedMode === '咨询' && messages.some(m => m.id !== "welcome") && (
-          <section className="flex flex-wrap items-center gap-2">
+          <section className="flex flex-wrap items-center gap-2 shrink-0">
             <span className="text-[12px] text-[var(--color-text-secondary)] font-medium flex items-center gap-1">
               <Lightbulb size={14} strokeWidth={1.5} />
               快速问题
@@ -534,7 +536,7 @@ export default function Home() {
         )}
 
         {/* Input & Attachment Tip */}
-        <div className="relative">
+        <div className="relative shrink-0 mt-4">
           {attachTipVisible && (
             <div
               role="status"
