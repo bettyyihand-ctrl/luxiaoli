@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      delimiters: { start: "{{", end: "}}" },
       nullGetter() {
         return "___";
       },
