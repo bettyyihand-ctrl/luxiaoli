@@ -13,6 +13,11 @@ const ICONS: Record<ActionMode, string> = {
   "文书": "📄",
   "霍格沃茨": "🪄"
 };
+const CONSULTATION_PROMPTS = [
+  "对方全责但保险公司只愿意赔一部分，我应该怎么维权？",
+  "交通事故后误工费、护理费、营养费通常如何计算？",
+  "责任认定书下来后，对方拖着不处理，我下一步怎么做？"
+];
 
 export default function Home() {
   const [selectedMode, setSelectedMode] = useState<ActionMode>("计算");
@@ -124,10 +129,9 @@ export default function Home() {
                    return m;
                  }));
                  // Stream user context parsing as well
-                 const newCtx = parseUserContext(aiFullText, userContext);
-                 setUserContext(newCtx);
+                 setUserContext(prevContext => parseUserContext(aiFullText, prevContext));
                }
-            } catch (e) {
+            } catch {
                // ignore parse errors for chunks
             }
           }
@@ -224,6 +228,11 @@ export default function Home() {
                 {selectedMode === '文书' && "提供双方信息与诉求，为你起草交通纠纷法律文书。"}
                 {selectedMode === '霍格沃茨' && "调试模式：暴露系统内部 API 与 Context 状态。"}
               </p>
+              {selectedMode === '咨询' && (
+                <p className="max-w-[560px] m-0 text-[12px] leading-[1.6] text-[var(--color-text-secondary)]">
+                  建议补充信息：事故时间地点、责任划分、伤情与治疗情况、已发生费用、对方/保险沟通进展。
+                </p>
+              )}
             </div>
             <figure className="relative min-h-[110px] md:min-h-0 m-0 bg-[#111] md:clip-art">
               <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=960&q=82" alt="城市道路与车流" className="w-full h-full min-h-[110px] block object-cover grayscale-[0.1] contrast-[1.08] saturate-[0.86]" />
@@ -304,6 +313,21 @@ export default function Home() {
         </section>
 
         {/* Composer */}
+        {selectedMode === '咨询' && (
+          <section className="flex flex-wrap items-center gap-2 -mt-2">
+            <span className="text-[12px] text-[var(--color-text-secondary)]">咨询示例</span>
+            {CONSULTATION_PROMPTS.map(prompt => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => setInputText(prompt)}
+                className="min-h-[30px] px-2.5 rounded-sm border border-[rgba(17,17,17,0.12)] text-[12px] text-[var(--color-text-secondary)] bg-white hover:text-[#111] hover:border-[var(--color-primary)] transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
+          </section>
+        )}
         <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
            <button type="button" className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
            <textarea 
