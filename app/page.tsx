@@ -26,6 +26,8 @@ export default function Home() {
   const [userContext, setUserContext] = useState<Record<string, unknown>>({});
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const streamAbortControllerRef = useRef<AbortController | null>(null);
   
   // API Debug states
   const [apiRequestLog, setApiRequestLog] = useState("尚未发送请求。");
@@ -44,17 +46,39 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      streamAbortControllerRef.current?.abort();
+    };
+  }, []);
+
+  const autoResizeTextarea = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${Math.min(el.scrollHeight, 148)}px`;
+  };
+
+  const handlePromptInsert = (prompt: string) => {
+    if (isSending) return;
+    setInputText(prompt);
+    requestAnimationFrame(autoResizeTextarea);
+  };
+
   const handleSend = async () => {
     if (isSending || (!inputText.trim())) return;
+    streamAbortControllerRef.current?.abort();
     
+    const normalizedInput = inputText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: [{ type: "text", text: inputText.trim() }]
+      content: [{ type: "text", text: normalizedInput }]
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
+    requestAnimationFrame(autoResizeTextarea);
     setIsSending(true);
 
     const apiPayload = {
@@ -79,16 +103,26 @@ export default function Home() {
     setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "" }]);
 
     try {
+      const controller = new AbortController();
+      streamAbortControllerRef.current = controller;
       const response = await fetch('/api/chat', {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(apiPayload)
+        body: JSON.stringify(apiPayload),
+        signal: controller.signal
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        let detail = "";
+        try {
+          const errorBody = await response.json() as { error?: string };
+          detail = errorBody.error ? ` - ${errorBody.error}` : "";
+        } catch {
+          // ignore parse errors
+        }
+        throw new Error(`API Error: ${response.status}${detail}`);
       }
 
       setApiResponseLog(`HTTP ${response.status} ${response.statusText}\n\n`);
@@ -136,13 +170,39 @@ export default function Home() {
             }
           }
         }
+
+        const lastLine = buffer.trim();
+        if (lastLine.startsWith("data:")) {
+          const dataStr = lastLine.slice(5).trim();
+          if (dataStr && dataStr !== "[DONE]") {
+            try {
+              const data = JSON.parse(dataStr);
+              const delta = data.choices?.[0]?.delta?.content;
+              if (delta) {
+                aiFullText += delta;
+                setMessages(prev => prev.map(m => {
+                  if (m.id === aiMessageId) {
+                    return { ...m, rawText: aiFullText, content: [{ type: "text", text: aiFullText }] };
+                  }
+                  return m;
+                }));
+                setUserContext(prevContext => parseUserContext(aiFullText, prevContext));
+              }
+            } catch {
+              // ignore parse errors for trailing chunk
+            }
+          }
+        }
         
         setApiResponseLog(prev => prev + `\n\n最终文本：\n${aiFullText}`);
       }
     } catch (e: unknown) {
+      const fallbackText = e instanceof Error && e.name === "AbortError"
+        ? "请求已取消，请重试。"
+        : "请求失败，请稍后重试。";
       setMessages(prev => prev.map(m => {
          if (m.id === aiMessageId) {
-           return { ...m, rawText: "请求失败，请稍后重试。", content: [{ type: "text", text: "请求失败，请稍后重试。" }] };
+           return { ...m, rawText: fallbackText, content: [{ type: "text", text: fallbackText }] };
          }
          return m;
       }));
@@ -150,6 +210,7 @@ export default function Home() {
         setApiResponseLog(prev => prev + `\n\nError: ${e.message}`);
       }
     } finally {
+      streamAbortControllerRef.current = null;
       setIsSending(false);
     }
   };
@@ -320,7 +381,7 @@ export default function Home() {
               <button
                 key={prompt}
                 type="button"
-                onClick={() => setInputText(prompt)}
+                onClick={() => handlePromptInsert(prompt)}
                 className="min-h-[30px] px-2.5 rounded-sm border border-[rgba(17,17,17,0.12)] text-[12px] text-[var(--color-text-secondary)] bg-white hover:text-[#111] hover:border-[var(--color-primary)] transition-colors"
               >
                 {prompt}
@@ -331,9 +392,13 @@ export default function Home() {
         <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="grid grid-cols-[40px_minmax(0,1fr)_64px] md:grid-cols-[42px_minmax(0,1fr)_72px] items-end md:gap-2.5 gap-2 p-2 md:p-3 border border-[rgba(17,17,17,0.16)] rounded-sm bg-white shadow-[var(--shadow-card)] mb-14 md:mb-0">
            <button type="button" className="min-h-[42px] border-0 rounded-sm text-[#111] bg-[#FDE047] text-[24px] leading-none hover:bg-[#FACC15] transition-colors">＋</button>
            <textarea 
+             ref={textareaRef}
              rows={1}
              value={inputText}
-             onChange={e => setInputText(e.target.value)}
+             onChange={e => {
+               setInputText(e.target.value);
+               autoResizeTextarea();
+             }}
              disabled={isSending}
              onKeyDown={e => {
                if (e.key === 'Enter' && !e.shiftKey) {

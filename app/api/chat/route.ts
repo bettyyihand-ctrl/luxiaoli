@@ -1,8 +1,19 @@
 import { NextRequest } from "next/server";
 
+interface ChatRequestBody {
+  messages?: unknown;
+  custom_variables?: unknown;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages, custom_variables } = await req.json();
+    const { messages, custom_variables }: ChatRequestBody = await req.json();
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: "Invalid request: messages is required." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
     const assistant_id = process.env.YUANQI_ASSISTANT_ID || "2044761886189456576";
     const api_token = process.env.YUANQI_API_TOKEN || "";
@@ -22,6 +33,8 @@ export async function POST(req: NextRequest) {
       custom_variables
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     const response = await fetch("https://yuanqi.tencent.com/openapi/v1/agent/chat/completions", {
       method: "POST",
       headers: {
@@ -29,7 +42,10 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${api_token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    }).finally(() => {
+      clearTimeout(timeoutId);
     });
 
     if (!response.ok) {
@@ -50,6 +66,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
+    if (error instanceof Error && error.name === "AbortError") {
+      return new Response(JSON.stringify({ error: "Yuanqi API timeout, please retry." }), {
+        status: 504,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
