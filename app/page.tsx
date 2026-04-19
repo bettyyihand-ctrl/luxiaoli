@@ -89,6 +89,7 @@ export default function Home() {
       })),
       custom_variables: {
         actionType: selectedMode,
+        ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
         ...(Object.keys(userContext).length > 0 ? { userContext: JSON.stringify(userContext) } : {})
       }
     };
