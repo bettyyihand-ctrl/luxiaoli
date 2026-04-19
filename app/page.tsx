@@ -266,7 +266,7 @@ export default function Home() {
   };
 
   const TopBar = () => (
-    <header className="hidden fixed top-0 left-0 right-0 z-20 h-[var(--topbar-height)] lg:flex items-center justify-between px-6 border-b border-[var(--color-border)] bg-[rgba(245,247,250,0.88)] backdrop-blur-md">
+    <header className="flex lg:hidden fixed top-0 left-0 right-0 z-20 h-[var(--topbar-height)] items-center justify-between px-6 border-b border-[var(--color-border)] bg-[rgba(245,247,250,0.88)] backdrop-blur-md">
       <a className="inline-flex items-center gap-2.5 min-w-0 text-inherit no-underline" href="#app">
         <span className="w-[40px] h-[40px] grid place-items-center rounded-[8px] text-white bg-[var(--color-primary)] font-serif font-semibold text-lg">路</span>
         <span>
