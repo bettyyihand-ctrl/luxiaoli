@@ -11,13 +11,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This project is a Next.js (App Router) application migrated from a legacy Vanilla JS/HTML/CSS project. It utilizes **React 19**, **Next.js 16**, **Tailwind CSS v4**, and **TypeScript**.
 
 - `app/` - The main Next.js App Router directory.
-  - `page.tsx`: The primary interactive client component (`"use client"`). Handles state management, UI rendering, and streaming fetch requests.
-  - `layout.tsx`: Root layout configuration including Google Fonts (`next/font/google`).
+  - `page.tsx`: The primary interactive client component (`"use client"`). Handles state management, UI rendering, and streaming fetch requests (featuring a docked sidebar and environment-based debug UI).
+  - `layout.tsx`: Root layout configuration including Google Fonts (`next/font/google`) and Vercel Analytics integration.
   - `globals.css`: Contains Tailwind `@theme` mappings for legacy CSS variables and specific custom animations.
+  - `api/`: API Route handlers. Contains `/api/chat/route.ts` for AI streaming and `/api/logout/route.ts` for terminating user sessions.
+  - `login/`: Contains the login view (`page.tsx`) and Server Actions (`actions.ts`) for password-based authentication.
 - `lib/` - Shared utilities and TypeScript definitions.
   - `config.ts`: Environment variables and API endpoints (Tencent Yuanqi API).
   - `types.ts`: Core TypeScript definitions matching state and payload shapes.
   - `markdown.ts`: Utilities for custom markdown parsing and `<data>` payload extraction.
+- `proxy.ts` - Middleware module used for application route protection and JWT authorization verification.
+- `.env.local` - Local environment variables comprising sensitive configurations (e.g., `AUTH_SECRET`, API keys). Must NOT be committed.
 - `components/` - React components directory (available for future extraction to reduce `page.tsx` complexity).
 - `_legacy_static/` - **DO NOT MODIFY**. Contains the original vanilla HTML/JS/CSS files. Use this directory as the source of truth for design patterns, UI mechanics, and class structure replication.
 
@@ -43,3 +47,7 @@ When modifying or extending this codebase, adhere to the following rules:
 ### 4. Code Quality
 - Add comprehensive error handling directly in UI blocks when fetching data logic fails.
 - Do NOT re-introduce `.js` files or vanilla DOM manipulation. Use React refs (`useRef`) when viewport scrolling is needed.
+
+### 5. Authentication & Security
+- The application relies on password-based authentication via JWTs. Verification is intercepted via `proxy.ts`. 
+- Sensitive credentials (such as external API keys and `AUTH_SECRET`) MUST remain in explicit server-side environments (`.env.local`) and only be utilized via Server Components, Server Actions (`app/actions.ts`), or Route Handlers (`app/api/`). Do NOT expose variables to the browser (`NEXT_PUBLIC_`) unless necessary.
