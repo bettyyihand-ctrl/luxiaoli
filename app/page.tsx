@@ -114,11 +114,12 @@ export default function Home() {
     requestAnimationFrame(autoResizeTextarea);
   };
 
-  const handleSend = async () => {
-    if (isSending || (!inputText.trim())) return;
+  const handleSend = async (overrideText?: string) => {
+    const effectiveText = overrideText ?? inputText;
+    if (isSending || (!effectiveText.trim())) return;
     streamAbortControllerRef.current?.abort();
-    
-    const normalizedInput = inputText.trim();
+
+    const normalizedInput = effectiveText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -462,19 +463,29 @@ export default function Home() {
 
           {selectedMode === '文书' && (
             <div className="flex gap-2 flex-wrap">
-              {(["和解协议", "民事起诉状", "证据目录"] as const).map(docType => (
-                <button
-                  key={docType}
-                  onClick={() => setSelectedDocType(docType)}
-                  className={`px-4 py-2 rounded-[var(--radius-pill)] text-[13px] font-medium transition-all border-2 ${
-                    selectedDocType === docType
-                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
-                      : "bg-white text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-[var(--color-primary)]"
-                  }`}
-                >
-                  {docType}
-                </button>
-              ))}
+              {(["和解协议", "民事起诉状", "证据目录"] as const).map(docType => {
+                const docPromptMap: Record<string, string> = {
+                  "和解协议": "我想起草一份和解协议",
+                  "民事起诉状": "我想起草一份民事起诉状",
+                  "证据目录": "我想起草一份证据目录",
+                };
+                return (
+                  <button
+                    key={docType}
+                    onClick={() => {
+                      setSelectedDocType(docType);
+                      handleSend(docPromptMap[docType]);
+                    }}
+                    className={`px-4 py-2 rounded-[var(--radius-pill)] text-[13px] font-medium transition-all border-2 ${
+                      selectedDocType === docType
+                        ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                        : "bg-white text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-[var(--color-primary)]"
+                    }`}
+                  >
+                    {docType}
+                  </button>
+                );
+              })}
             </div>
           )}
 
