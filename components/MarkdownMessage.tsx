@@ -31,7 +31,7 @@ export default function MarkdownMessage({ rawText }: Props) {
             <td className="border border-[rgba(17,17,17,0.08)] px-2.5 py-1.5 align-top" {...props} />
           ),
           strong: (props) => (
-            <strong className="font-semibold text-[#111]" {...props} />
+            <strong className="font-semibold" {...props} />
           ),
           a: ({ href, ...props }) => (
             <a
@@ -44,9 +44,12 @@ export default function MarkdownMessage({ rawText }: Props) {
           ),
           ul: (props) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
           ol: (props) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-          h1: (props) => <h3 className="text-[15px] font-semibold mt-3 mb-1.5" {...props} />,
-          h2: (props) => <h3 className="text-[14px] font-semibold mt-3 mb-1.5" {...props} />,
-          h3: (props) => <h4 className="text-[13px] font-semibold mt-2.5 mb-1" {...props} />,
+          h1: (props) => <h1 className="text-[20px] font-bold leading-[1.4] mt-5 mb-2.5" {...props} />,
+          h2: (props) => <h2 className="text-[18px] font-bold leading-[1.4] mt-[18px] mb-2.5" {...props} />,
+          h3: (props) => <h3 className="text-[17px] font-bold leading-[1.4] mt-4 mb-2" {...props} />,
+          h4: (props) => <h4 className="text-[16px] font-semibold leading-[1.5] mt-3.5 mb-1.5" {...props} />,
+          h5: (props) => <h5 className="text-[15px] font-semibold leading-[1.5] mt-3 mb-1" {...props} />,
+          h6: (props) => <h6 className="text-[14px] font-semibold leading-[1.5] mt-2.5 mb-1" {...props} />,
           code: ({ className, children, ...rest }) => {
             const isBlock = /language-/.test(className || "");
             return isBlock ? (
