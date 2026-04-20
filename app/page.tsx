@@ -114,7 +114,7 @@ export default function Home() {
     requestAnimationFrame(autoResizeTextarea);
   };
 
-  const handleSend = async (overrideText?: string, overrideDocType?: string) => {
+  const handleSend = async (overrideText?: string, overrideDocType?: "和解协议" | "民事起诉状" | "证据目录") => {
     const effectiveText = overrideText ?? inputText;
     if (isSending || (!effectiveText.trim())) return;
     streamAbortControllerRef.current?.abort();
