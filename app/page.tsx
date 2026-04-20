@@ -534,7 +534,7 @@ export default function Home() {
                      {msg.role === 'user' ? '你' : '理'}
                    </div>
                    <div className="flex flex-col gap-2 max-w-[85%] md:max-w-[min(720px,75%)]">
-                     <div className={`rounded-[var(--radius-lg)] md:p-4 p-3 leading-[1.6] break-words ${
+                     <div className={`rounded-[var(--radius-lg)] md:p-4 p-3 text-[12px] leading-[1.65] break-words ${
                        msg.role === 'user'
                          ? 'text-white bg-[var(--color-primary)] shadow-[var(--shadow-sm)]'
                          : 'text-[var(--color-text-primary)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] shadow-[var(--shadow-sm)] markdown-body'
