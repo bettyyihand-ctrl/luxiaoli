@@ -41,6 +41,8 @@ const getModeIconBgColor = (mode: ActionMode) => {
   };
   return colors[mode];
 };
+const ATTACH_TIP_TEXT = "票据与责任认定书图片识别功能即将上线，请在对话框中直接描述关键信息";
+
 const CONSULTATION_PROMPTS = [
   "对方全责但保险公司只愿意赔一部分，我应该怎么维权？",
   "交通事故后误工费、护理费、营养费通常如何计算？",
@@ -606,29 +608,23 @@ export default function Home() {
             >
               <span className="flex items-center gap-2">
                 <Lightbulb size={14} strokeWidth={1.5} />
-                票据与责任认定书图片识别功能即将上线，请在对话框中直接描述关键信息
+                {ATTACH_TIP_TEXT}
               </span>
             </div>
           )}
 
           <form
             onSubmit={e => { e.preventDefault(); handleSend(); }}
-            className={`grid items-end gap-2 p-3 border border-[var(--color-border)] rounded-[var(--radius-xl)] bg-white shadow-[var(--shadow-md)] ${
-              selectedMode === '文书'
-                ? "grid-cols-[minmax(0,1fr)_48px]"
-                : "grid-cols-[44px_minmax(0,1fr)_44px]"
-            }`}
+            className="grid items-end gap-2 p-3 border border-[var(--color-border)] rounded-[var(--radius-xl)] bg-white shadow-[var(--shadow-md)] grid-cols-[44px_minmax(0,1fr)_44px]"
           >
-            {selectedMode !== '文书' && (
-              <button
-                type="button"
-                aria-label="附件功能"
-                onClick={handleAttachClick}
-                className="flex items-center justify-center w-11 h-11 rounded-[10px] border-0 bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors flex-shrink-0"
-              >
-                <Plus size={20} strokeWidth={1.5} />
-              </button>
-            )}
+            <button
+              type="button"
+              aria-label="附件功能"
+              onClick={handleAttachClick}
+              className="flex items-center justify-center w-11 h-11 rounded-[10px] border-0 bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors flex-shrink-0"
+            >
+              <Plus size={20} strokeWidth={1.5} />
+            </button>
             <textarea
               ref={textareaRef}
               rows={1}
