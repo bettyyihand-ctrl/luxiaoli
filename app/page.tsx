@@ -138,7 +138,9 @@ export default function Home() {
       custom_variables: {
         actionType: selectedMode,
         ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
-        ...(Object.keys(userContext).length > 0 ? { userContext: JSON.stringify(userContext) } : {})
+        ...(selectedMode !== '文书' && Object.keys(userContext).length > 0
+          ? { userContext: JSON.stringify(userContext) }
+          : {})
       }
     };
 
@@ -150,7 +152,8 @@ export default function Home() {
     setApiResponseLog("正在等待 API 返回...");
 
     const aiMessageId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "" }]);
+    const pendingDocType = selectedMode === "文书" ? selectedDocType : undefined;
+    setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "", docType: pendingDocType }]);
 
     try {
       const controller = new AbortController();
@@ -262,6 +265,38 @@ export default function Home() {
     } finally {
       streamAbortControllerRef.current = null;
       setIsSending(false);
+    }
+  };
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadDoc = async (rawText: string, docType: string, msgId: string) => {
+    setDownloadingId(msgId);
+    try {
+      const res = await fetch("/api/generate-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText, docType }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "未知错误" })) as { error?: string };
+        alert(`文档生成失败：${err.error ?? res.statusText}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${docType}.docx`;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert(`下载失败，请重试。${err instanceof Error ? err.message : ""}`);
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -483,23 +518,36 @@ export default function Home() {
                    }`}>
                      {msg.role === 'user' ? '你' : '理'}
                    </div>
-                   <div className={`max-w-[85%] md:max-w-[min(720px,75%)] rounded-[var(--radius-lg)] md:p-4 p-3 leading-[1.6] break-words ${
-                     msg.role === 'user'
-                       ? 'text-white bg-[var(--color-primary)] shadow-[var(--shadow-sm)]'
-                       : 'text-[var(--color-text-primary)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] shadow-[var(--shadow-sm)] markdown-body'
-                   }`}>
-                     {msg.role === 'user' ? (
-                       <span className="whitespace-pre-wrap">
-                         {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
-                       </span>
-                     ) : (
-                       msg.rawText === ""
-                          ? <span className="inline-flex gap-1 items-center">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
-                            </span>
-                          : <MarkdownMessage rawText={msg.rawText || ""} />
+                   <div className="flex flex-col gap-2 max-w-[85%] md:max-w-[min(720px,75%)]">
+                     <div className={`rounded-[var(--radius-lg)] md:p-4 p-3 leading-[1.6] break-words ${
+                       msg.role === 'user'
+                         ? 'text-white bg-[var(--color-primary)] shadow-[var(--shadow-sm)]'
+                         : 'text-[var(--color-text-primary)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] shadow-[var(--shadow-sm)] markdown-body'
+                     }`}>
+                       {msg.role === 'user' ? (
+                         <span className="whitespace-pre-wrap">
+                           {msg.content.find(c => c.type === 'text')?.text || '已发送内容'}
+                         </span>
+                       ) : (
+                         msg.rawText === ""
+                            ? <span className="inline-flex gap-1 items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.12s'}}></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] animate-pulse-custom" style={{animationDelay: '0.24s'}}></span>
+                              </span>
+                            : <MarkdownMessage rawText={msg.rawText || ""} />
+                       )}
+                     </div>
+                     {msg.role === 'assistant' && msg.docType && msg.rawText && (
+                       <button
+                         type="button"
+                         disabled={downloadingId === msg.id}
+                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id)}
+                         className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] transition-colors shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
+                       >
+                         <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>
+                         <span>{downloadingId === msg.id ? "生成中…" : `下载${msg.docType} Word 文档`}</span>
+                       </button>
                      )}
                    </div>
                 </article>
