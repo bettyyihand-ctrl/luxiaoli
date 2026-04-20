@@ -45,12 +45,21 @@
   --shadow-card: 0 1px 0 rgba(17,17,17,0.08), 0 18px 40px rgba(17,17,17,0.06);
   --shadow-panel: 0 28px 70px rgba(17,17,17,0.10);
 
+  /* Chat Input Spacing */
+  --chat-input-bottom-gap: 48px;
+
   /* Legacy Variables */
   --color-accent: #E84A5F;
   --color-sidebar: #2A2E37;
   --color-sidebar-active: #E84A5F;
   --sidebar-width: 320px;
   --topbar-height: 56px;
+}
+
+@media (max-width: 640px) {
+  @theme {
+    --chat-input-bottom-gap: 24px;
+  }
 }
 
 @layer base {

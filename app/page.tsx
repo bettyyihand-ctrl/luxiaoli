@@ -426,7 +426,7 @@ export default function Home() {
       <TopBar />
       <DesktopSidebar />
 
-      <main className="min-h-dvh lg:h-screen lg:ml-[320px] flex flex-col p-4 md:p-6 lg:p-8 gap-6 pb-24 lg:pb-0 lg:overflow-hidden">
+      <main className="min-h-dvh lg:h-screen lg:ml-[320px] flex flex-col p-4 md:p-6 lg:p-8 gap-6 pb-20 lg:pb-0 lg:overflow-hidden">
         <div className="max-w-[1024px] mx-auto w-full flex-1 flex flex-col gap-6 lg:overflow-hidden">
         {/* Header & Function Cards */}
         <section className="grid gap-6 shrink-0">
@@ -597,7 +597,7 @@ export default function Home() {
         )}
 
         {/* Input & Attachment Tip */}
-        <div className="relative shrink-0 mt-4">
+        <div className="relative shrink-0 mt-4" style={{ marginBottom: 'var(--chat-input-bottom-gap)' }}>
           {attachTipVisible && (
             <div
               role="status"
