@@ -118,7 +118,7 @@ export default function Home() {
     requestAnimationFrame(autoResizeTextarea);
   };
 
-  const handleSend = async (overrideText?: string) => {
+  const handleSend = async (overrideText?: string, overrideDocType?: "和解协议" | "民事起诉状" | "证据目录") => {
     const effectiveText = overrideText ?? inputText;
     if (isSending || (!effectiveText.trim())) return;
     streamAbortControllerRef.current?.abort();
@@ -142,7 +142,7 @@ export default function Home() {
       })),
       custom_variables: {
         actionType: selectedMode,
-        ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
+        ...(selectedMode === '文书' ? { docType: overrideDocType ?? selectedDocType } : {}),
         ...(selectedMode !== '文书' && Object.keys(userContext).length > 0
           ? { userContext: JSON.stringify(userContext) }
           : {})
@@ -157,7 +157,7 @@ export default function Home() {
     setApiResponseLog("正在等待 API 返回...");
 
     const aiMessageId = (Date.now() + 1).toString();
-    const pendingDocType = selectedMode === "文书" ? selectedDocType : undefined;
+    const pendingDocType = selectedMode === "文书" ? (overrideDocType ?? selectedDocType) : undefined;
     setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "", docType: pendingDocType }]);
 
     try {
@@ -478,7 +478,7 @@ export default function Home() {
                     key={docType}
                     onClick={() => {
                       setSelectedDocType(docType);
-                      handleSend(docPromptMap[docType]);
+                      handleSend(docPromptMap[docType], docType);
                     }}
                     className={`px-4 py-2 rounded-[var(--radius-pill)] text-[13px] font-medium transition-all border-2 ${
                       selectedDocType === docType
