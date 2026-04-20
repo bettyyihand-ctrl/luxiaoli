@@ -114,7 +114,7 @@ export default function Home() {
     requestAnimationFrame(autoResizeTextarea);
   };
 
-  const handleSend = async (overrideText?: string) => {
+  const handleSend = async (overrideText?: string, overrideDocType?: string) => {
     const effectiveText = overrideText ?? inputText;
     if (isSending || (!effectiveText.trim())) return;
     streamAbortControllerRef.current?.abort();
@@ -138,7 +138,7 @@ export default function Home() {
       })),
       custom_variables: {
         actionType: selectedMode,
-        ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
+        ...(selectedMode === '文书' ? { docType: overrideDocType ?? selectedDocType } : {}),
         ...(selectedMode !== '文书' && Object.keys(userContext).length > 0
           ? { userContext: JSON.stringify(userContext) }
           : {})
@@ -474,7 +474,7 @@ export default function Home() {
                     key={docType}
                     onClick={() => {
                       setSelectedDocType(docType);
-                      handleSend(docPromptMap[docType]);
+                      handleSend(docPromptMap[docType], docType);
                     }}
                     className={`px-4 py-2 rounded-[var(--radius-pill)] text-[13px] font-medium transition-all border-2 ${
                       selectedDocType === docType
