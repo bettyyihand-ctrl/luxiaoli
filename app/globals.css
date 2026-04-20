@@ -147,7 +147,7 @@
 }
 .markdown-body p {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.75;
 }
 .markdown-body p:last-child {
@@ -155,7 +155,7 @@
 }
 /* Fallback: bare paragraph whose only child is a <strong> acts as a pseudo-heading */
 .markdown-body p:has(> strong:only-child) {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  margin: 14px 0 6px;
+  margin: 12px 0 6px;
 }
