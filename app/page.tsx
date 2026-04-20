@@ -5,6 +5,7 @@ import { Calculator, MessageCircle, FileText, Lightbulb, Plus, Send, LogOut, Inf
 import { ActionMode, Message } from "@/lib/types";
 import { parseUserContext } from "@/lib/markdown";
 import MarkdownMessage from "@/components/MarkdownMessage";
+import DisclaimerModal from "@/components/DisclaimerModal";
 
 const MODES: ActionMode[] = process.env.NODE_ENV === 'development'
   ? ["计算", "咨询", "文书", "霍格沃茨"]
@@ -68,6 +69,7 @@ export default function Home() {
   const streamAbortControllerRef = useRef<AbortController | null>(null);
   const [attachTipVisible, setAttachTipVisible] = useState(false);
   const attachTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
 
   // API Debug states
   const [apiRequestLog, setApiRequestLog] = useState("尚未发送请求。");
@@ -311,7 +313,7 @@ export default function Home() {
         </span>
       </a>
       <div className="flex items-center gap-3">
-        <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-[var(--color-text-secondary)] bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-primary-bg)] transition-colors">
+        <button onClick={() => setDisclaimerOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-[var(--color-text-secondary)] bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-primary-bg)] transition-colors">
           <Info size={16} strokeWidth={1.5} />
           免责声明
         </button>
@@ -378,7 +380,7 @@ export default function Home() {
       </div>
 
       <div className="border-t border-[var(--color-border)] p-6 space-y-2 shrink-0">
-        <button className="w-full inline-flex items-center gap-2 justify-center px-4 py-2.5 text-[13px] text-[var(--color-text-secondary)] bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-primary-bg)] transition-colors">
+        <button onClick={() => setDisclaimerOpen(true)} className="w-full inline-flex items-center gap-2 justify-center px-4 py-2.5 text-[13px] text-[var(--color-text-secondary)] bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-primary-bg)] transition-colors">
           <Info size={16} strokeWidth={1.5} />
           免责声明
         </button>
@@ -658,6 +660,7 @@ export default function Home() {
       </main>
 
       <MobileBottomNav />
+      <DisclaimerModal open={disclaimerOpen} onOpenChange={setDisclaimerOpen} />
     </div>
   );
 }
