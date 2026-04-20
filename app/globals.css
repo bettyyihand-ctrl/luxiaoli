@@ -65,7 +65,7 @@
   .clip-art {
     clip-path: polygon(11% 0, 100% 0, 100% 100%, 0 100%, 0 18%);
   }
-  
+
   .bg-brand-multiply::after {
     content: '';
     position: absolute;
@@ -73,17 +73,25 @@
     background: linear-gradient(135deg, rgba(15,118,110,0.52), rgba(232,74,95,0.16) 48%, rgba(253,224,71,0.18));
     mix-blend-mode: multiply;
   }
-  
+
   .animate-pulse-custom {
     animation: pulse-custom 1s infinite ease-in-out;
   }
-  
+
   .animate-toast-in {
     animation: toastIn 180ms ease;
   }
-  
+
   .animate-toast-out {
     animation: toastOut 180ms ease forwards;
+  }
+
+  .animate-modal-overlay {
+    animation: overlayFadeIn 200ms ease;
+  }
+
+  .animate-modal-content {
+    animation: modalZoomIn 200ms ease;
   }
 }
 
@@ -105,6 +113,16 @@
 
 @keyframes toastOut {
   to { opacity: 0; transform: translateX(18px); }
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalZoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Some specific overwrites for elements that are easier mapped in CSS */
