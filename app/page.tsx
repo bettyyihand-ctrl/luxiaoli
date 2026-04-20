@@ -153,7 +153,7 @@ export default function Home() {
     setApiResponseLog("正在等待 API 返回...");
 
     const aiMessageId = (Date.now() + 1).toString();
-    const pendingDocType = selectedMode === "文书" ? selectedDocType : undefined;
+    const pendingDocType = selectedMode === "文书" ? (overrideDocType ?? selectedDocType) : undefined;
     setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: [], rawText: "", docType: pendingDocType }]);
 
     try {
