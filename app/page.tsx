@@ -138,7 +138,7 @@ export default function Home() {
       custom_variables: {
         actionType: selectedMode,
         ...(selectedMode === '文书' ? { docType: selectedDocType } : {}),
-        ...((selectedMode !== '咨询' || !freeConsultationMode) && selectedMode !== '文书' && Object.keys(userContext).length > 0
+        ...(selectedMode !== '文书' && Object.keys(userContext).length > 0
           ? { userContext: JSON.stringify(userContext) }
           : {})
       }
