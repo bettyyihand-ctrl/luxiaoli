@@ -164,7 +164,7 @@ function extractComplaint(text: string): FieldMap {
   const pGN  = (plaintiff  || "").match(/[，,]\s*(男|女)[，,\s]*([^\n，,。]{1,5}族)/);
   const d1GN = (defendant1 || "").match(/[，,]\s*(男|女)[，,\s]*([^\n，,。]{1,5}族)/);
 
-  return {
+  const fields: FieldMap = {
     plaintiff_name:
       ep0(/姓名[：:]\s*([^\n,，（(\d]{2,15})/) ||
       ep0(/原告[^：:\n]{0,10}[：:]\s*([^\n,，（(\d]{2,15})/) || "___",
@@ -192,7 +192,7 @@ function extractComplaint(text: string): FieldMap {
       ed20(/被告[^：:\n]{0,15}[：:]\s*([^\n,，（(\d]{4,50})/) ||
       eFirst(text, /([^\n,，（(]{4,40}?保险[^\n,，）)]{0,15}(?:公司|股份))/) || "___",
     defendant2_credit_code:  ed2(/统一社会信用代码[：:]\s*([^\n,，\s]{15,20})/),
-    defendant2_address:      ed2(/(?:住(?:所|址)|地址)[：:]\s*([^\n,，。]{4,60})/),
+    defendant2_address:      ed2(/(?:住(?:所地?|址)|地址)[：:]\s*([^\n,，。]{4,60})/),
     defendant2_principal:    e(text, /(?:法定代表人|负责人)[：:]\s*([^\n,，]{2,15})/),
     defendant2_phone:        ed2(/(?:电话|联系方式)[：:]\s*([\d\-\s]{7,15})/),
 
@@ -208,12 +208,11 @@ function extractComplaint(text: string): FieldMap {
     appraisal_fee:          e(text, /鉴定费[：:\s]*([\d,.]+)\s*元/),
     car_repair_fee:         e(text, /车辆维修费[：:\s]*([\d,.]+)\s*元/),
     other_loss:             e(text, /其他(?:损失|费用)[：:\s]*([\d,.]+)\s*元/),
-    total_compensation:
-      eFirst(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
-      eFirst(text, /(?:合计|总计|赔偿总额)[：:\s]*([\d,.]+)\s*元/) || "___",
+    // total_compensation filled below after fee fields are known
+    total_compensation: "___",
     total_compensation_cn:
       eFirst(text, /共计(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) ||
-      eFirst(text, /(?:合计|总计)[\d,.]+元[（(]([^）)]+)[）)]/) || "___",
+      eFirst(text, /(?:以上合计|合计|总计)(?:人民币)?[\d,.]+元[（(](?:大写[：:])?([^）)]+)[）)]/) || "___",
 
     accident_year:     accDate?.[1] ?? String(today.getFullYear()),
     accident_month:    accDate?.[2] ?? "___",
@@ -276,6 +275,27 @@ function extractComplaint(text: string): FieldMap {
     file_month: String(today.getMonth() + 1),
     file_day:   String(today.getDate()),
   };
+
+  // Compute total_compensation from text patterns; fall back to summing individual fee fields.
+  const totalFromText =
+    eFirst(text, /共计(?:人民币)?\s*([\d,.]+)\s*元/) ||
+    eFirst(text, /(?:以上合计|合计|总计|赔偿总额)(?:人民币)?\s*([\d,.]+)\s*元/);
+  if (totalFromText) {
+    fields.total_compensation = totalFromText;
+  } else {
+    const feeKeys = [
+      "medical_fee", "food_fee", "nutrition_fee", "nursing_fee", "lost_income",
+      "transport_fee", "disability_compensation", "mental_damage",
+      "appraisal_fee", "car_repair_fee", "other_loss",
+    ];
+    const sum = feeKeys.reduce((acc, k) => {
+      const v = fields[k];
+      return acc + (v && v !== "___" ? parseFloat(v.replace(/,/g, "")) || 0 : 0);
+    }, 0);
+    if (sum > 0) fields.total_compensation = String(sum);
+  }
+
+  return fields;
 }
 
 function extractEvidence(text: string): FieldMap {
