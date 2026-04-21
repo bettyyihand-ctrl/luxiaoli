@@ -12,16 +12,17 @@ const TEMPLATE_MAP: Record<DocType, string> = {
 };
 
 export async function POST(request: NextRequest) {
-  let body: { rawText?: unknown; docType?: unknown };
+  let body: { rawText?: unknown; docType?: unknown; variables?: unknown };
   try {
-    body = await request.json() as { rawText?: unknown; docType?: unknown };
+    body = await request.json() as { rawText?: unknown; docType?: unknown; variables?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { rawText, docType } = body;
+  const { rawText, docType, variables } = body;
+  const hasVariables = variables !== null && typeof variables === 'object' && !Array.isArray(variables);
 
-  if (typeof rawText !== "string" || !rawText.trim()) {
+  if (!hasVariables && (typeof rawText !== "string" || !rawText.trim())) {
     return NextResponse.json({ error: "rawText is required" }, { status: 400 });
   }
   if (!docType || !Object.keys(TEMPLATE_MAP).includes(docType as string)) {
@@ -50,7 +51,9 @@ export async function POST(request: NextRequest) {
         return "___";
       },
     });
-    const fields = extractDocFields(rawText, validDocType);
+    const fields = hasVariables
+      ? variables as Record<string, string | number>
+      : extractDocFields(rawText as string, validDocType);
     if (debug) return NextResponse.json({ fields });
     doc.render(fields);
     outputBuffer = doc.getZip().generate({ type: "nodebuffer" }) as Buffer;
