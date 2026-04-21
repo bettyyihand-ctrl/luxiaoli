@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Calculator, MessageCircle, FileText, Lightbulb, Plus, Send, LogOut, Info, Zap } from "lucide-react";
 import { ActionMode, Message } from "@/lib/types";
-import { parseUserContext } from "@/lib/markdown";
+import { parseUserContext, parseDocVars } from "@/lib/markdown";
 import MarkdownMessage from "@/components/MarkdownMessage";
 import DisclaimerModal from "@/components/DisclaimerModal";
 
@@ -253,6 +253,13 @@ export default function Home() {
         }
         
         setApiResponseLog(prev => prev + `\n\n最终文本：\n${aiFullText}`);
+
+        const docVars = parseDocVars(aiFullText);
+        if (docVars) {
+          setMessages(prev => prev.map(m =>
+            m.id === aiMessageId ? { ...m, docVars } : m
+          ));
+        }
       }
     } catch (e: unknown) {
       const fallbackText = e instanceof Error && e.name === "AbortError"
@@ -275,13 +282,13 @@ export default function Home() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const handleDownloadDoc = async (rawText: string, docType: string, msgId: string) => {
+  const handleDownloadDoc = async (rawText: string, docType: string, msgId: string, docVars?: Record<string, string | number>) => {
     setDownloadingId(msgId);
     try {
       const res = await fetch("/api/generate-doc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText, docType }),
+        body: JSON.stringify({ rawText, docType, ...(docVars ? { variables: docVars } : {}) }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "未知错误" })) as { error?: string };
@@ -563,7 +570,7 @@ export default function Home() {
                        <button
                          type="button"
                          disabled={downloadingId === msg.id}
-                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id)}
+                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id, msg.docVars)}
                          className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] transition-colors shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
                        >
                          <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>

@@ -12,6 +12,7 @@ export interface Message {
   content: MessageContent[];
   rawText?: string;
   docType?: "和解协议" | "民事起诉状" | "证据目录";
+  docVars?: Record<string, string | number>;
 }
 
 export type ActionMode = "计算" | "咨询" | "文书" | "霍格沃茨";
