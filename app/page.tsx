@@ -526,13 +526,20 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto p-6 scroll-smooth min-h-0">
               {messages.map((msg, i) => (
                 <article key={msg.id || i} className={`flex items-start gap-3 mb-5 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                   <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-[8px] text-[14px] font-medium ${
-                     msg.role === 'user'
-                       ? 'order-2 text-white bg-[var(--color-primary)]'
-                       : 'text-[var(--color-primary)] bg-[var(--color-primary-bg)]'
-                   }`}>
-                     {msg.role === 'user' ? '你' : '理'}
-                   </div>
+                   {msg.role === 'user' ? (
+                     <div
+                       className="w-8 h-8 shrink-0 rounded-[8px] order-2"
+                       style={{ backgroundColor: '#60A5FA' }}
+                       aria-label="用户"
+                     />
+                   ) : (
+                     <div
+                       className="w-8 h-8 shrink-0 grid place-items-center rounded-[8px] text-white bg-[var(--color-primary)] font-serif font-semibold text-[14px]"
+                       aria-label="路小理"
+                     >
+                       路
+                     </div>
+                   )}
                    <div className="flex flex-col gap-2 max-w-[85%] md:max-w-[min(720px,75%)]">
                      <div className={`rounded-[var(--radius-lg)] md:p-4 p-3 text-[12px] leading-[1.65] break-words ${
                        msg.role === 'user'
