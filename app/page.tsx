@@ -528,8 +528,7 @@ export default function Home() {
                 <article key={msg.id || i} className={`flex items-start gap-3 mb-5 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                    {msg.role === 'user' ? (
                      <div
-                       className="w-8 h-8 shrink-0 rounded-[8px] order-2"
-                       style={{ backgroundColor: '#60A5FA' }}
+                       className="w-8 h-8 shrink-0 rounded-[8px] order-2 bg-[var(--color-primary)]"
                        aria-label="用户"
                      />
                    ) : (
