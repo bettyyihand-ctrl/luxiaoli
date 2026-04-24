@@ -560,15 +560,21 @@ export default function Home() {
                        )}
                      </div>
                      {msg.role === 'assistant' && msg.docType && msg.rawText && (
-                       <button
-                         type="button"
-                         disabled={downloadingId === msg.id}
-                         onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id)}
-                         className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] transition-colors shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>
-                         <span>{downloadingId === msg.id ? "生成中…" : `下载${msg.docType} Word 文档`}</span>
-                       </button>
+                       <div className="relative group self-start inline-block">
+                         <button
+                           type="button"
+                           disabled={downloadingId === msg.id}
+                           onClick={() => handleDownloadDoc(msg.rawText!, msg.docType!, msg.id)}
+                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] transition-colors shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
+                         >
+                           <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>
+                           <span>{downloadingId === msg.id ? "生成中…" : `下载${msg.docType} Word 文档`}</span>
+                         </button>
+                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[rgba(0,0,0,0.75)] text-white text-[12px] leading-snug rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                           当前功能为 Demo 版本，具体功能有待完善
+                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[rgba(0,0,0,0.75)]" />
+                         </div>
+                       </div>
                      )}
                    </div>
                 </article>
