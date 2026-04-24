@@ -570,9 +570,9 @@ export default function Home() {
                            <span>{downloadingId === msg.id ? "⏳" : "⬇"}</span>
                            <span>{downloadingId === msg.id ? "生成中…" : `下载${msg.docType} Word 文档`}</span>
                          </button>
-                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[rgba(0,0,0,0.75)] text-white text-[12px] leading-snug rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-[rgba(0,0,0,0.75)] text-white text-[12px] leading-snug rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[rgba(0,0,0,0.75)]" />
                            当前功能为 Demo 版本，具体功能有待完善
-                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[rgba(0,0,0,0.75)]" />
                          </div>
                        </div>
                      )}
